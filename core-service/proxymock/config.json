@@ -1,7 +1,0 @@
-{
-  "name": "core-service-tests",
-  "description": "Tests for the Core Service API",
-  "baseURL": "http://localhost:8080/v1/api",
-  "testDirectory": "tests",
-  "dataDirectory": "data"
-} 

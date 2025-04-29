@@ -1,5 +1,23 @@
 ### CRM Core Service API Test Requests
-@baseUrl = http://localhost:8080/v1/api
+###
+### HOW TO USE THIS FILE:
+### 1. First run the "Create a new user" request under the Users API section
+###    - This will create a user with email "testuser@example.com"
+### 2. Then run the "Login and get JWT token" request under the Authentication API section
+###    - This will return a JWT token
+### 3. Copy the token value from the response and update the @authToken variable
+### 4. Now you can run any other requests - they will use your authentication token
+###
+### Note: Each resource (account, contact, etc.) creation will return an ID
+### Update the corresponding variables (@accountId, @contactId, etc.) with these values
+###
+### IMPORTANT: On first-time setup, you'll need to temporarily disable the authentication
+### in core-service/cmd/main.go to create your first admin user, then re-enable authentication.
+
+### Base URL for the API
+@baseUrlNoProxy = http://localhost:8080/v1/api
+@baseUrlProxymock = http://localhost:4143/v1/api
+@baseUrl = {{baseUrlNoProxy}}
 
 ### Health Check
 GET {{baseUrl}}/health
@@ -10,6 +28,39 @@ GET {{baseUrl}}/health
 @contactId = 47157d4e-978b-4b5d-8fb5-2dd23816f07e
 @opportunityId = 47d899a5-5634-47f0-a9e3-f4786330c928
 @noteId = replace_with_actual_id
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDEyNWU3Y2ItNTgwNC00MjllLWE3OTgtZjExNGQ1ZTMxYjljIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImV4cCI6MTc0NjA0MzgyNCwiaWF0IjoxNzQ1OTU3NDI0fQ.a96Co00M7BhQTcGoXS4KVfpfyGxIvgyYVw-RjeJZrj8
+
+#########################
+### AUTHENTICATION API ###
+#########################
+
+### Login and get JWT token
+# After creating a user, use this to get a token
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "testpassword"
+}
+
+# Upon successful login, set the authToken variable with the token from the response
+
+#############################
+### FIRST-TIME SETUP ONLY ###
+#############################
+
+### Create first admin user (RUN THIS FIRST - requires temporarily disabling auth)
+# This is only needed for first-time setup
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@example.com",
+  "password": "adminpassword",
+  "role": "admin"
+}
 
 ###################
 ### USERS API #####
@@ -17,15 +68,18 @@ GET {{baseUrl}}/health
 
 ### Get all users
 GET {{baseUrl}}/users
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create a new user
 # This should be the first request you run
 POST {{baseUrl}}/users
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "username": "testuser",
+  "email": "testuser@example.com",
   "password": "testpassword",
   "role": "user"
 }
@@ -33,6 +87,7 @@ Content-Type: application/json
 ### Get user by ID
 # Update the userId variable with the ID returned from the create user request
 GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ###################
@@ -41,11 +96,13 @@ Accept: application/json
 
 ### List all accounts
 GET {{baseUrl}}/accounts
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create a new account
 POST {{baseUrl}}/accounts
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "name": "Acme Corporation",
@@ -62,11 +119,13 @@ Content-Type: application/json
 
 ### Get account by ID (replace accountId with an actual ID)
 GET {{baseUrl}}/accounts/{{accountId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Update an account (replace accountId with an actual ID)
 PUT {{baseUrl}}/accounts/{{accountId}}
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "name": "Acme Corporation Updated",
@@ -83,6 +142,7 @@ Content-Type: application/json
 
 ### Delete an account (replace accountId with an actual ID)
 DELETE {{baseUrl}}/accounts/{{accountId}}
+Authorization: Bearer {{authToken}}
 
 ###################
 ### CONTACTS API ###
@@ -90,11 +150,13 @@ DELETE {{baseUrl}}/accounts/{{accountId}}
 
 ### List all contacts
 GET {{baseUrl}}/contacts
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create a new contact
 POST {{baseUrl}}/contacts
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "first_name": "John",
@@ -113,11 +175,13 @@ Content-Type: application/json
 
 ### Get contact by ID (replace contactId with an actual ID)
 GET {{baseUrl}}/contacts/{{contactId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Update a contact (replace contactId with an actual ID)
 PUT {{baseUrl}}/contacts/{{contactId}}
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "first_name": "John",
@@ -136,10 +200,12 @@ Content-Type: application/json
 
 ### Get contacts by account ID (replace accountId with an actual ID)
 GET {{baseUrl}}/contacts/account/{{accountId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Delete a contact (replace contactId with an actual ID)
 DELETE {{baseUrl}}/contacts/{{contactId}}
+Authorization: Bearer {{authToken}}
 
 ########################
 ### OPPORTUNITIES API ###
@@ -147,11 +213,13 @@ DELETE {{baseUrl}}/contacts/{{contactId}}
 
 ### List all opportunities
 GET {{baseUrl}}/opportunities
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create a new opportunity
 POST {{baseUrl}}/opportunities
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "opportunity_name": "New Software Implementation",
@@ -166,11 +234,13 @@ Content-Type: application/json
 
 ### Get opportunity by ID (replace opportunityId with an actual ID)
 GET {{baseUrl}}/opportunities/{{opportunityId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Update an opportunity (replace opportunityId with an actual ID)
 PUT {{baseUrl}}/opportunities/{{opportunityId}}
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "opportunity_name": "Software Implementation Updated",
@@ -185,9 +255,11 @@ Content-Type: application/json
 
 ### Delete an opportunity (replace opportunityId with an actual ID)
 DELETE {{baseUrl}}/opportunities/{{opportunityId}}
+Authorization: Bearer {{authToken}}
 
 ### Get opportunities by account ID (replace accountId with an actual ID)
 GET {{baseUrl}}/opportunities/account/{{accountId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 #################
@@ -196,11 +268,13 @@ Accept: application/json
 
 ### List all notes
 GET {{baseUrl}}/notes
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create a new note
 POST {{baseUrl}}/notes
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "content": "Initial meeting went well. Client is interested in our premium package.",
@@ -215,11 +289,13 @@ Content-Type: application/json
 
 ### Get note by ID (replace noteId with an actual ID)
 GET {{baseUrl}}/notes/{{noteId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Update a note (replace noteId with an actual ID)
 PUT {{baseUrl}}/notes/{{noteId}}
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "content": "Updated meeting notes. Client has approved the budget for the premium package.",
@@ -228,14 +304,17 @@ Content-Type: application/json
 
 ### Delete a note (replace noteId with an actual ID)
 DELETE {{baseUrl}}/notes/{{noteId}}
+Authorization: Bearer {{authToken}}
 
 ### Get notes by record ID and type (replace accountId with an actual ID)
 GET {{baseUrl}}/notes/record/account/{{accountId}}
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ### Create note association
 POST {{baseUrl}}/notes/associations
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "note_id": "{{noteId}}",
@@ -247,6 +326,7 @@ Content-Type: application/json
 ### Delete note association
 DELETE {{baseUrl}}/notes/associations
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "note_id": "{{noteId}}",

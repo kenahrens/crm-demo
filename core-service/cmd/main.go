@@ -23,6 +23,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+	defer database.Close()
+
+	// Perform a comprehensive health check on the database
+	if err := database.HealthCheck(); err != nil {
+		log.Fatalf("Database health check failed: %v", err)
+	}
+	log.Println("Initial database health check passed")
 
 	// Get current directory to build path to migrations
 	curDir, err := os.Getwd()
@@ -71,17 +78,48 @@ func main() {
 	// Set up API endpoints
 	apiV1 := router.Group("/v1/api")
 	{
-		// Health check endpoint
+		// Enhanced health check endpoint that includes database status
 		apiV1.GET("/health", func(c *gin.Context) {
+			// Check database health
+			dbStatus := "ok"
+			dbError := ""
+
+			if err := database.HealthCheck(); err != nil {
+				dbStatus = "error"
+				dbError = err.Error()
+				log.Printf("Health check endpoint - Database error: %v", err)
+			}
+
 			c.JSON(200, gin.H{
 				"status": "ok",
+				"database": gin.H{
+					"status": dbStatus,
+					"error":  dbError,
+				},
 			})
 		})
-		userHandler.RegisterRoutes(apiV1)
-		accountHandler.RegisterRoutes(apiV1)
-		contactHandler.RegisterRoutes(apiV1)
-		opportunityHandler.RegisterRoutes(apiV1)
-		noteHandler.RegisterRoutes(apiV1)
+
+		// Public routes (no authentication required)
+		userHandler.RegisterAuthRoutes(apiV1) // Register only auth routes like login
+
+		// Secure routes (authentication required)
+		secureApi := apiV1.Group("")
+		secureApi.Use(handlers.AuthMiddleware())
+		{
+			// Register all secure routes
+			userHandler.RegisterSecureRoutes(secureApi)  // User management requires auth
+			accountHandler.RegisterRoutes(secureApi)     // Protect account routes
+			contactHandler.RegisterRoutes(secureApi)     // Protect contact routes
+			opportunityHandler.RegisterRoutes(secureApi) // Protect opportunity routes
+			noteHandler.RegisterRoutes(secureApi)        // Protect note routes
+		}
+
+		// Admin-only routes
+		adminApi := secureApi.Group("")
+		adminApi.Use(handlers.RequireRole("admin"))
+		{
+			// Add admin-specific endpoints here if needed
+		}
 	}
 
 	// Start the server

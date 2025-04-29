@@ -236,3 +236,14 @@ func (r *AccountRepository) DeleteAccount(id uuid.UUID) error {
 
 	return nil
 }
+
+// UserExists checks if a user with the given ID exists in the database
+func (r *AccountRepository) UserExists(id uuid.UUID) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`
+	var exists bool
+	err := r.db.QueryRow(query, id).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("error checking if user exists: %w", err)
+	}
+	return exists, nil
+}

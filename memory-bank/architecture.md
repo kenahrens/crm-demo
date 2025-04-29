@@ -37,17 +37,12 @@ core-service/
 │       ├── contact.go
 │       ├── opportunity.go
 │       └── note.go
-├── proxymock/                  # API testing
-│   ├── config.json             # Proxymock configuration
-│   ├── data/                   # Test data
-│   │   └── users.sql
-│   └── tests/                  # API tests
-│       ├── account_test.json
-│       └── health_test.json
 ├── Dockerfile                  # Container definition
 ├── Makefile                    # Build and dev commands
 └── go.mod                      # Go module definition
 ```
+
+> **Note:** API testing using proxymock will be implemented in a later phase of the project.
 
 ### Components
 
@@ -129,3 +124,15 @@ The Core Service is containerized using Docker and deployed to Kubernetes using 
 3. **Deployment**: Pod specification with health checks and resource limits
 4. **Service**: Internal service endpoint 
 5. **Ingress**: External access point with path-based routing
+
+## Development Environment
+
+### Version Control
+
+The project uses Git for version control with a comprehensive `.gitignore` file that handles artifacts from all three languages used in the system:
+
+1. **Go** - Core backend service
+2. **JavaScript** - Frontend components
+3. **Python** - AI processing components
+
+The `.gitignore` ensures that only source code and configuration are committed, while build artifacts, dependencies, and environment-specific files are excluded from version control.

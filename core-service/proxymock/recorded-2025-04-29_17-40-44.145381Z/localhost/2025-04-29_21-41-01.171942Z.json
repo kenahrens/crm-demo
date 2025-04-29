@@ -1,0 +1,149 @@
+{
+  "msgType": "rrpair",
+  "ts": "2025-04-29T21:41:01.171942Z",
+  "l7protocol": "http",
+  "duration": 2,
+  "tags": {
+    "captureMode": "proxy",
+    "proxyLocation": "in",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.438",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "3",
+    "source": "goproxy"
+  },
+  "uuid": "secg0+chQliMgtraxUv2fQ==",
+  "direction": "IN",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "undefined",
+  "network_address": "localhost:8080",
+  "command": "GET",
+  "location": "/v1/api/accounts/61256f0e-c664-4a1b-8a10-8688848210a6",
+  "status": "200",
+  "http": {
+    "req": {
+      "url": "/v1/api/accounts/61256f0e-c664-4a1b-8a10-8688848210a6",
+      "uri": "/v1/api/accounts/61256f0e-c664-4a1b-8a10-8688848210a6",
+      "version": "1.1",
+      "method": "GET",
+      "host": "localhost:4143",
+      "headers": {
+        "Accept": [
+          "application/json, text/plain, */*"
+        ],
+        "Accept-Encoding": [
+          "gzip, deflate, br, zstd"
+        ],
+        "Accept-Language": [
+          "en-US,en;q=0.9"
+        ],
+        "Authorization": [
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDEyNWU3Y2ItNTgwNC00MjllLWE3OTgtZjExNGQ1ZTMxYjljIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImV4cCI6MTc0NjA0OTI1NiwiaWF0IjoxNzQ1OTYyODU2fQ.liCYvCWYmq_mlgVdlZ4nyRqRpfFWEs9kE1qsFVJXcaE"
+        ],
+        "Cache-Control": [
+          "no-cache"
+        ],
+        "Connection": [
+          "close"
+        ],
+        "Cookie": [
+          "_ga=GA1.1.1219081171.1737585523; hubspotutk=33ef87c8541d975de65048e615602b1e; __hssrc=1; ko_id=94050eb5-dc6f-4974-9731-70fff5cc996f; ajs_anonymous_id=b2f453e9-6cac-4b41-bc72-07c15897461a; ajs_user_id=d9950472-eae6-4563-8f38-77bdd3a8cc57; __sec__fid=ce9befdd4e5887659b141dd1a8d71828; __sec_tid=1ckey4n; __sec_crid=42e72d1ca8bbc01a51ca417a9f0f3fbd3208f540ccb8dc3a6e234d81ff7dc3ed; __sec_id={\"username\":\"ken@speedscale.com\",\"type\":\"email\"}; rl_page_init_referrer=RudderEncrypt%3AU2FsdGVkX1%2Brhv%2BTOetV9kt7i1XM6GxvWrzfaGRUVhE%3D; rl_page_init_referring_domain=RudderEncrypt%3AU2FsdGVkX1%2FPTZCOQaAdTXmDF6TVMQ0%2BZp71c0xgY18%3D; rl_anonymous_id=RudderEncrypt%3AU2FsdGVkX1%2BPfhSlUyISGqs2XqINXfw49XlXJiIUXa5G1bIV1Y%2FR2wfnDYQ21ouVBT9BZcm32BZvn2uz94ya0g%3D%3D; rl_user_id=RudderEncrypt%3AU2FsdGVkX1%2B%2F6s99oZpkgmuj78aHQuScmKDqX3ZSVyER5FXWGAtJ2AHtjXDwuOxz0OXyjbGmkeDymWm0kL0kbgoiYmMyMSl42YCUerwmWTcuy3Cz6ChfeFYOwFqH47XnMkfyolji8%2F%2BQPzRO1Ln3mi0omDqjoxsV%2BK4oqIvlXfA%3D; rl_trait=RudderEncrypt%3AU2FsdGVkX19QiqBazw4VqOgoxc8cMMa7mlqyr4MUnCMkDNFI2hMtTs%2FiYCJjx662VFqnUqaoWpkhr9FvxsTxhTFvFoPvnPy%2FBq36edoQa06uCg94oaAY91hmQ08%2FZBdLNI2%2B62i%2Fc4jUrzU2o%2B%2Bulg%3D%3D; rl_session=RudderEncrypt%3AU2FsdGVkX19Jpz8eouysPVcfCq8hMzBcFeQc3zXxyMn8VrQX43YDMIgAfb4b0mInMyIBTQpfqnqZ4CwniZUJs7IenbSL2GnZRCaFpF36O1Be%2BGT%2FbEcKK0cvtE5UmZU4XTeXQsFkJcLDak15zQrF4g%3D%3D; ph_phc_4URIAm1uYfJO7j8kWSe0J8lc8IqnstRLS7Jx8NcakHo_posthog=%7B%22distinct_id%22%3A%22862f9283f6e5951fbb7aaa6f6e925e70c093fd20c8a47cae4fa89e26280502d7%23c87180aa-8e37-4163-bf23-a8d041f4ef76%22%2C%22%24sesid%22%3A%5B1741959264857%2C%22019594dc-fa59-7360-b8b8-fc742a3146bd%22%2C1741959264857%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22http%3A%2F%2Flocalhost%3A5678%2Fhome%2Fworkflows%22%7D%7D; __hstc=181257784.33ef87c8541d975de65048e615602b1e.1737585541445.1744650984904.1744824153772.28; __sec__ghost=8BbJqud; __sec_peid=eyJwYXlsb2FkIjoiZmliNmc0OVRqRTFqRS9uM2xpbWxDVlVLeFJ2K0dvaWZsdlBoMFU2MzRzdmxrVjdZeGJmb29UVjl3RXpuUENIUiIsInBFbmNyIjp0cnVlfQ==; _ga_0QE379GMML=GS1.1.1744826277.36.0.1744826277.60.0.0; _ga_0H68WN06PT=GS1.1.1744826277.34.0.1744826277.60.0.0; ph_phc_X3ripZa8FVGT7seoXRlTES7u4I5xwBLU7E9pRkcm61p_posthog=%7B%22distinct_id%22%3A%22d9950472-eae6-4563-8f38-77bdd3a8cc57%22%2C%22%24sesid%22%3A%5B1744826277279%2C%2201963f9f-9e74-7861-9ca2-c0d1a4340ec4%22%2C1744824147572%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22http%3A%2F%2Flocalhost%3A3000%2F%22%7D%7D"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Host": [
+          "localhost:4143"
+        ],
+        "Pragma": [
+          "no-cache"
+        ],
+        "Referer": [
+          "http://localhost:3000/accounts/61256f0e-c664-4a1b-8a10-8688848210a6"
+        ],
+        "Sec-Ch-Ua": [
+          "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\""
+        ],
+        "Sec-Ch-Ua-Mobile": [
+          "?0"
+        ],
+        "Sec-Ch-Ua-Platform": [
+          "\"macOS\""
+        ],
+        "Sec-Fetch-Dest": [
+          "empty"
+        ],
+        "Sec-Fetch-Mode": [
+          "cors"
+        ],
+        "Sec-Fetch-Site": [
+          "same-origin"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+        ],
+        "X-Forwarded-For": [
+          "127.0.0.1"
+        ],
+        "X-Forwarded-Host": [
+          "localhost:3000"
+        ],
+        "X-Forwarded-Port": [
+          "3000"
+        ],
+        "X-Forwarded-Proto": [
+          "http"
+        ]
+      }
+    },
+    "res": {
+      "contentType": "application/json; charset=utf-8",
+      "statusCode": 200,
+      "statusMessage": "200 OK",
+      "headers": {
+        "Access-Control-Allow-Credentials": [
+          "true"
+        ],
+        "Access-Control-Allow-Headers": [
+          "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"
+        ],
+        "Access-Control-Allow-Methods": [
+          "POST, OPTIONS, GET, PUT, DELETE"
+        ],
+        "Access-Control-Allow-Origin": [
+          "*"
+        ],
+        "Content-Length": [
+          "413"
+        ],
+        "Content-Type": [
+          "application/json; charset=utf-8"
+        ],
+        "Date": [
+          "Tue, 29 Apr 2025 21:41:01 GMT"
+        ]
+      },
+      "bodyBase64": "eyJpZCI6IjYxMjU2ZjBlLWM2NjQtNGExYi04YTEwLTg2ODg4NDgyMTBhNiIsIm5hbWUiOiJBY21lIENvcnBvcmF0aW9uIFVwZGF0ZWQiLCJpbmR1c3RyeSI6IlNvZnR3YXJlIiwid2Vic2l0ZSI6Imh0dHBzOi8vYWNtZS11cGRhdGVkLmV4YW1wbGUuY29tIiwicGhvbmUiOiI1NTUtOTg3LTY1NDMiLCJhZGRyZXNzIjoiNDU2IE1hcmtldCBTdHJlZXQiLCJjaXR5IjoiU2FuIEZyYW5jaXNjbyIsInN0YXRlIjoiQ0EiLCJ6aXAiOiI5NDEwNSIsImNvdW50cnkiOiJVU0EiLCJjcmVhdGVkX2F0IjoiMjAyNS0wNC0yOFQxODowNTo0My40MzMwNDYtMDQ6MDAiLCJ1cGRhdGVkX2F0IjoiMjAyNS0wNC0yOFQxODowNTo1OC4yMDgxNjEtMDQ6MDAiLCJjcmVhdGVkX2J5IjoiZDEyNWU3Y2ItNTgwNC00MjllLWE3OTgtZjExNGQ1ZTMxYjljIn0="
+    }
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2025-04-29T21:41:01.171804Z",
+    "downstream": {
+      "established": "2025-04-29T21:41:01.171103Z",
+      "ipAddress": "127.0.0.1",
+      "port": 52730,
+      "bytesSent": "3656"
+    },
+    "upstream": {
+      "established": "2025-04-29T21:41:01.171642Z",
+      "ipAddress": "127.0.0.1",
+      "port": 8080,
+      "hostname": "localhost",
+      "bytesSent": "846"
+    }
+  }
+}

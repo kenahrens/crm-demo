@@ -84,6 +84,17 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 		return
 	}
 
+	// Validate that the created_by user exists
+	userExists, err := h.repo.UserExists(accountData.CreatedBy)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error validating user: " + err.Error()})
+		return
+	}
+	if !userExists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID in created_by field"})
+		return
+	}
+
 	account, err := h.repo.CreateAccount(accountData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
