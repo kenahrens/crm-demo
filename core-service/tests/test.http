@@ -1,0 +1,264 @@
+### CRM Core Service API Test Requests
+@baseUrl = http://localhost:8080/v1/api
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Variables
+@userId = d125e7cb-5804-429e-a798-f114d5e31b9c
+@accountId = 61256f0e-c664-4a1b-8a10-8688848210a6
+@contactId = 47157d4e-978b-4b5d-8fb5-2dd23816f07e
+@opportunityId = 47d899a5-5634-47f0-a9e3-f4786330c928
+@noteId = replace_with_actual_id
+
+###################
+### USERS API #####
+###################
+
+### Get all users
+GET {{baseUrl}}/users
+Accept: application/json
+
+### Create a new user
+# This should be the first request you run
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword",
+  "role": "user"
+}
+
+### Get user by ID
+# Update the userId variable with the ID returned from the create user request
+GET {{baseUrl}}/users/{{userId}}
+Accept: application/json
+
+###################
+### ACCOUNTS API ###
+###################
+
+### List all accounts
+GET {{baseUrl}}/accounts
+Accept: application/json
+
+### Create a new account
+POST {{baseUrl}}/accounts
+Content-Type: application/json
+
+{
+  "name": "Acme Corporation",
+  "industry": "Technology",
+  "website": "https://acme.example.com",
+  "phone": "555-123-4567",
+  "address": "123 Main Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94105",
+  "country": "USA",
+  "created_by": "{{userId}}"
+}
+
+### Get account by ID (replace accountId with an actual ID)
+GET {{baseUrl}}/accounts/{{accountId}}
+Accept: application/json
+
+### Update an account (replace accountId with an actual ID)
+PUT {{baseUrl}}/accounts/{{accountId}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corporation Updated",
+  "industry": "Software",
+  "website": "https://acme-updated.example.com",
+  "phone": "555-987-6543",
+  "address": "456 Market Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94105",
+  "country": "USA",
+  "updated_by": "{{userId}}"
+}
+
+### Delete an account (replace accountId with an actual ID)
+DELETE {{baseUrl}}/accounts/{{accountId}}
+
+###################
+### CONTACTS API ###
+###################
+
+### List all contacts
+GET {{baseUrl}}/contacts
+Accept: application/json
+
+### Create a new contact
+POST {{baseUrl}}/contacts
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "555-123-4567",
+  "title": "CEO",
+  "account_id": "{{accountId}}",
+  "address": "123 Main Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94105",
+  "country": "USA",
+  "created_by": "{{userId}}"
+}
+
+### Get contact by ID (replace contactId with an actual ID)
+GET {{baseUrl}}/contacts/{{contactId}}
+Accept: application/json
+
+### Update a contact (replace contactId with an actual ID)
+PUT {{baseUrl}}/contacts/{{contactId}}
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe Updated",
+  "email": "john.updated@example.com",
+  "phone": "555-987-6543",
+  "title": "CTO",
+  "account_id": "{{accountId}}",
+  "address": "456 Market Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94105",
+  "country": "USA",
+  "updated_by": "{{userId}}"
+}
+
+### Get contacts by account ID (replace accountId with an actual ID)
+GET {{baseUrl}}/contacts/account/{{accountId}}
+Accept: application/json
+
+### Delete a contact (replace contactId with an actual ID)
+DELETE {{baseUrl}}/contacts/{{contactId}}
+
+########################
+### OPPORTUNITIES API ###
+########################
+
+### List all opportunities
+GET {{baseUrl}}/opportunities
+Accept: application/json
+
+### Create a new opportunity
+POST {{baseUrl}}/opportunities
+Content-Type: application/json
+
+{
+  "opportunity_name": "New Software Implementation",
+  "account_id": "{{accountId}}",
+  "primary_contact_id": "{{contactId}}",
+  "stage": "Qualification",
+  "amount": 75000,
+  "close_date": "2023-12-31",
+  "probability": 60,
+  "created_by": "{{userId}}"
+}
+
+### Get opportunity by ID (replace opportunityId with an actual ID)
+GET {{baseUrl}}/opportunities/{{opportunityId}}
+Accept: application/json
+
+### Update an opportunity (replace opportunityId with an actual ID)
+PUT {{baseUrl}}/opportunities/{{opportunityId}}
+Content-Type: application/json
+
+{
+  "opportunity_name": "Software Implementation Updated",
+  "account_id": "{{accountId}}",
+  "primary_contact_id": "{{contactId}}",
+  "stage": "Negotiation",
+  "amount": 85000,
+  "close_date": "2023-11-30",
+  "probability": 75,
+  "updated_by": "{{userId}}"
+}
+
+### Delete an opportunity (replace opportunityId with an actual ID)
+DELETE {{baseUrl}}/opportunities/{{opportunityId}}
+
+### Get opportunities by account ID (replace accountId with an actual ID)
+GET {{baseUrl}}/opportunities/account/{{accountId}}
+Accept: application/json
+
+#################
+### NOTES API ###
+#################
+
+### List all notes
+GET {{baseUrl}}/notes
+Accept: application/json
+
+### Create a new note
+POST {{baseUrl}}/notes
+Content-Type: application/json
+
+{
+  "content": "Initial meeting went well. Client is interested in our premium package.",
+  "created_by": "{{userId}}",
+  "records": [
+    {
+      "record_id": "{{accountId}}",
+      "record_type": "account"
+    }
+  ]
+}
+
+### Get note by ID (replace noteId with an actual ID)
+GET {{baseUrl}}/notes/{{noteId}}
+Accept: application/json
+
+### Update a note (replace noteId with an actual ID)
+PUT {{baseUrl}}/notes/{{noteId}}
+Content-Type: application/json
+
+{
+  "content": "Updated meeting notes. Client has approved the budget for the premium package.",
+  "updated_by": "{{userId}}"
+}
+
+### Delete a note (replace noteId with an actual ID)
+DELETE {{baseUrl}}/notes/{{noteId}}
+
+### Get notes by record ID and type (replace accountId with an actual ID)
+GET {{baseUrl}}/notes/record/account/{{accountId}}
+Accept: application/json
+
+### Create note association
+POST {{baseUrl}}/notes/associations
+Content-Type: application/json
+
+{
+  "note_id": "{{noteId}}",
+  "record_id": "{{contactId}}",
+  "record_type": "contact",
+  "created_by": "{{userId}}"
+}
+
+### Delete note association
+DELETE {{baseUrl}}/notes/associations
+Content-Type: application/json
+
+{
+  "note_id": "{{noteId}}",
+  "record_id": "{{contactId}}",
+  "record_type": "contact"
+}
+
+### Using the test requests:
+### 1. First create a user and save the returned ID
+### 2. Update the userId variable at the top of this file
+### 3. Then create an account using that user ID
+### 4. Update the accountId variable
+### 5. Create a contact with that account ID
+### 6. Update the contactId variable
+### 7. Continue with other operations in a similar manner 

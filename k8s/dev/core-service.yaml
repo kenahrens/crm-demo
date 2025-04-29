@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-service-config
+  namespace: crm-dev
+data:
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_USER: "postgres"
+  DB_NAME: "crm"
+  DB_SSLMODE: "disable"
+  PORT: "8080"
+  GIN_MODE: "debug"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: core-service-secrets
+  namespace: crm-dev
+type: Opaque
+data:
+  DB_PASSWORD: cG9zdGdyZXM= # postgres (base64 encoded)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-service
+  namespace: crm-dev
+  labels:
+    app: core-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-service
+  template:
+    metadata:
+      labels:
+        app: core-service
+    spec:
+      containers:
+      - name: core-service
+        image: ghcr.io/kenahrens/crm-demo/core-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: core-service-config
+        - secretRef:
+            name: core-service-secrets
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-service
+  namespace: crm-dev
+spec:
+  selector:
+    app: core-service
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: core-service-ingress
+  namespace: crm-dev
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: core-service
+            port:
+              number: 80 

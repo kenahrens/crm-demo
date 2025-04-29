@@ -1,0 +1,69 @@
+name: Core Service CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'core-service/**'
+      - '.github/workflows/core-service.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'core-service/**'
+      - '.github/workflows/core-service.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
+          cache: true
+          cache-dependency-path: core-service/go.sum
+
+      - name: Install dependencies
+        run: cd core-service && go mod download
+
+      - name: Build
+        run: cd core-service && make build
+
+      - name: Test
+        run: cd core-service && go test -v ./...
+
+  docker:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}/core-service
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./core-service
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }} 

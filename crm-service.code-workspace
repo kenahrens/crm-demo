@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": ".cursor"
+		},
+		{
+			"path": ".github"
+		},
+		{
+			"path": "core-service"
+		},
+		{
+			"path": "frontend"
+		},
+		{
+			"path": "k8s"
+		},
+		{
+			"path": "memory-bank"
+		},
+	],
+	"settings": {}
+}

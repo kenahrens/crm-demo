@@ -1,0 +1,19 @@
+{
+  "name": "Health Check Test",
+  "description": "Tests the health check endpoint",
+  "steps": [
+    {
+      "name": "Get Health Status",
+      "request": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "healthy"
+        }
+      }
+    }
+  ]
+} 

@@ -1,0 +1,112 @@
+{
+  "name": "Account CRUD Test",
+  "description": "Tests the account endpoints for creating, reading, updating, and deleting accounts",
+  "steps": [
+    {
+      "name": "Create Account",
+      "request": {
+        "method": "POST",
+        "path": "/accounts",
+        "body": {
+          "name": "Test Account",
+          "industry": "Technology",
+          "website": "https://example.com",
+          "phone": "555-123-4567",
+          "address": "123 Main St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105",
+          "country": "USA"
+        }
+      },
+      "response": {
+        "status": 201,
+        "saveBodyTo": "account"
+      }
+    },
+    {
+      "name": "Get Account",
+      "request": {
+        "method": "GET",
+        "path": "/accounts/${account.id}"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "${account.id}",
+          "name": "Test Account",
+          "industry": "Technology",
+          "website": "https://example.com",
+          "phone": "555-123-4567",
+          "address": "123 Main St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105",
+          "country": "USA"
+        }
+      }
+    },
+    {
+      "name": "Update Account",
+      "request": {
+        "method": "PUT",
+        "path": "/accounts/${account.id}",
+        "body": {
+          "name": "Updated Test Account",
+          "industry": "Technology",
+          "website": "https://example.com",
+          "phone": "555-123-4567",
+          "address": "123 Main St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105",
+          "country": "USA"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "${account.id}",
+          "name": "Updated Test Account"
+        }
+      }
+    },
+    {
+      "name": "List Accounts",
+      "request": {
+        "method": "GET",
+        "path": "/accounts"
+      },
+      "response": {
+        "status": 200,
+        "bodyField": "data",
+        "contains": [
+          {
+            "id": "${account.id}",
+            "name": "Updated Test Account"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Delete Account",
+      "request": {
+        "method": "DELETE",
+        "path": "/accounts/${account.id}"
+      },
+      "response": {
+        "status": 204
+      }
+    },
+    {
+      "name": "Verify Account Deleted",
+      "request": {
+        "method": "GET",
+        "path": "/accounts/${account.id}"
+      },
+      "response": {
+        "status": 404
+      }
+    }
+  ]
+} 

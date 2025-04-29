@@ -1,0 +1,36 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// User represents a user in the CRM system
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// UserCreate is used for creating a new user
+type UserCreate struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	Role     string `json:"role" binding:"required"`
+}
+
+// UserUpdate is used for updating an existing user
+type UserUpdate struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
+}
+
+// UserLogin is used for user login requests
+type UserLogin struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
