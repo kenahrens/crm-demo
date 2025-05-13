@@ -28,6 +28,18 @@ export const fetchNote = createAsyncThunk(
   }
 );
 
+export const fetchNotesByRecordId = createAsyncThunk(
+  'notes/fetchNotesByRecordId',
+  async ({ recordId, recordType }, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`${API_URL}/record/${recordType}/${recordId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || `Failed to fetch notes for ${recordType}`);
+    }
+  }
+);
+
 export const createNote = createAsyncThunk(
   'notes/createNote',
   async (noteData, { rejectWithValue }) => {
@@ -64,9 +76,34 @@ export const deleteNote = createAsyncThunk(
   }
 );
 
+export const addNoteAssociation = createAsyncThunk(
+  'notes/addNoteAssociation',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${API_URL}/associations`, data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to add note association');
+    }
+  }
+);
+
+export const removeNoteAssociation = createAsyncThunk(
+  'notes/removeNoteAssociation',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await api.delete(`${API_URL}/associations`, { data });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to remove note association');
+    }
+  }
+);
+
 const initialState = {
   notes: [],
   currentNote: null,
+  relatedNotes: [],
   loading: false,
   error: null,
 };
@@ -80,6 +117,9 @@ const noteSlice = createSlice({
     },
     clearCurrentNote: (state) => {
       state.currentNote = null;
+    },
+    clearRelatedNotes: (state) => {
+      state.relatedNotes = [];
     },
   },
   extraReducers: (builder) => {
@@ -122,6 +162,31 @@ const noteSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      // fetchNotesByRecordId
+      .addCase(fetchNotesByRecordId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchNotesByRecordId.fulfilled, (state, action) => {
+        state.loading = false;
+        // Handle different response formats
+        if (Array.isArray(action.payload)) {
+          state.relatedNotes = action.payload;
+        } else if (action.payload && action.payload.data && Array.isArray(action.payload.data)) {
+          state.relatedNotes = action.payload.data;
+        } else if (action.payload && typeof action.payload === 'object') {
+          state.relatedNotes = Array.isArray(Object.values(action.payload)[0]) 
+            ? Object.values(action.payload)[0] 
+            : [];
+        } else {
+          state.relatedNotes = [];
+        }
+      })
+      .addCase(fetchNotesByRecordId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.relatedNotes = [];
+      })
       // createNote
       .addCase(createNote.pending, (state) => {
         state.loading = true;
@@ -147,6 +212,10 @@ const noteSlice = createSlice({
           note.id === action.payload.id ? action.payload : note
         );
         state.currentNote = action.payload;
+        // Also update in related notes if present
+        state.relatedNotes = state.relatedNotes.map(note =>
+          note.id === action.payload.id ? action.payload : note
+        );
       })
       .addCase(updateNote.rejected, (state, action) => {
         state.loading = false;
@@ -160,6 +229,7 @@ const noteSlice = createSlice({
       .addCase(deleteNote.fulfilled, (state, action) => {
         state.loading = false;
         state.notes = state.notes.filter(note => note.id !== action.payload);
+        state.relatedNotes = state.relatedNotes.filter(note => note.id !== action.payload);
         if (state.currentNote && state.currentNote.id === action.payload) {
           state.currentNote = null;
         }
@@ -167,9 +237,54 @@ const noteSlice = createSlice({
       .addCase(deleteNote.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // addNoteAssociation
+      .addCase(addNoteAssociation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addNoteAssociation.fulfilled, (state, action) => {
+        state.loading = false;
+        // Refresh current note if it's affected
+        if (state.currentNote && state.currentNote.id === action.payload.note_id) {
+          // Add the new association to the records array
+          if (!state.currentNote.records) {
+            state.currentNote.records = [];
+          }
+          state.currentNote.records.push({
+            record_id: action.payload.record_id,
+            record_type: action.payload.record_type
+          });
+        }
+      })
+      .addCase(addNoteAssociation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // removeNoteAssociation
+      .addCase(removeNoteAssociation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeNoteAssociation.fulfilled, (state, action) => {
+        state.loading = false;
+        // Refresh current note if it's affected
+        if (state.currentNote && state.currentNote.id === action.payload.note_id) {
+          // Remove the association from the records array
+          if (state.currentNote.records) {
+            state.currentNote.records = state.currentNote.records.filter(
+              record => !(record.record_id === action.payload.record_id && 
+                         record.record_type === action.payload.record_type)
+            );
+          }
+        }
+      })
+      .addCase(removeNoteAssociation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { clearNoteError, clearCurrentNote } = noteSlice.actions;
+export const { clearNoteError, clearCurrentNote, clearRelatedNotes } = noteSlice.actions;
 export default noteSlice.reducer; 

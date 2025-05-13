@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { fetchAccountById } from '../../store/slices/accountSlice';
+import RelatedNotes from '../../components/notes/RelatedNotes';
 
 const AccountDetail = () => {
   const { id } = useParams();
@@ -93,20 +94,36 @@ const AccountDetail = () => {
         </CardContent>
       </Card>
 
-      <Divider sx={{ my: 2 }} />
-
-      <Typography variant="h5" sx={{ mb: 2 }}>Related Contacts</Typography>
-      {/* Related contacts would go here */}
-      
-      <Divider sx={{ my: 2 }} />
-      
-      <Typography variant="h5" sx={{ mb: 2 }}>Opportunities</Typography>
-      {/* Opportunities would go here */}
-      
-      <Divider sx={{ my: 2 }} />
-      
-      <Typography variant="h5" sx={{ mb: 2 }}>Notes</Typography>
-      {/* Notes would go here */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" sx={{ mb: 2 }}>Related Contacts</Typography>
+          {/* Related contacts would go here */}
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary">No contacts associated with this account yet.</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" sx={{ mb: 2 }}>Opportunities</Typography>
+          {/* Opportunities would go here */}
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary">No opportunities associated with this account yet.</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <Typography variant="h5" sx={{ mb: 2 }}>Notes</Typography>
+          <RelatedNotes 
+            recordId={id} 
+            recordType="account" 
+            recordName={currentAccount.name} 
+          />
+        </Grid>
+      </Grid>
     </Box>
   );
 };
