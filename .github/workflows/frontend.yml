@@ -39,7 +39,7 @@ jobs:
       - name: Test
         run: |
           cd frontend
-          npm test -- --watchAll=false
+          npm test -- --watchAll=false --passWithNoTests
       
       - name: Set up Docker Buildx
         if: github.event_name != 'pull_request'

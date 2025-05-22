@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Divider,
   Grid,
   Typography,
 } from '@mui/material';
