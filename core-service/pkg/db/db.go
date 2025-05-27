@@ -22,7 +22,7 @@ type DB struct {
 // New creates a new database connection
 func New() (*DB, error) {
 	// Database connection parameters
-	host := getEnv("DB_HOST", "postgres")
+	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
 	user := getEnv("DB_USER", "core")
 	password := getEnv("DB_PASSWORD", "core")

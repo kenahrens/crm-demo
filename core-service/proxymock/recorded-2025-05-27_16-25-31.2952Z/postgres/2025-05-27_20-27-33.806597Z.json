@@ -1,0 +1,115 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-05-27T20:27:33.806597Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.532",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "111",
+    "source": "goproxy"
+  },
+  "uuid": "RyM3irLbQW2WTYw7odGjRQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "postgres:5432",
+  "command": "Describe Prepared Statement",
+  "location": "SELECT n.id, n.content, n.created_by, n.created_at, n.updated_at FROM notes n JOIN note_associations na ON n.id = na.note_id WHERE na.record_id = $1 AND na.record_type = $2 ORDER BY n.created_at DESC",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PREPARED_STATEMENT",
+        "parseRequest": {
+          "query": "\n\t\tSELECT n.id, n.content, n.created_by, n.created_at, n.updated_at \n\t\tFROM notes n\n\t\tJOIN note_associations na ON n.id = na.note_id\n\t\tWHERE na.record_id = $1 AND na.record_type = $2\n\t\tORDER BY n.created_at DESC\n\t"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "parameterDescription": {
+              "parameterOids": [
+                2950,
+                25
+              ]
+            }
+          },
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "content",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 25,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_by",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "4",
+    "startTime": "2025-05-27T20:26:32.484787Z",
+    "downstream": {
+      "established": "2025-05-27T20:26:32.465536Z",
+      "ipAddress": "127.0.0.1",
+      "port": 61665,
+      "bytesSent": "1155"
+    },
+    "upstream": {
+      "established": "2025-05-27T20:26:32.467260Z",
+      "ipAddress": "192.168.68.51",
+      "port": 5432,
+      "hostname": "postgres",
+      "bytesSent": "2328"
+    }
+  }
+}

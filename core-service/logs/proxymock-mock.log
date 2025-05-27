@@ -1,0 +1,53 @@
+running with the following protocol providers:
+
+Provider POSTGRES listening on port [5432 57926]
+Provider HTTP listening on port [57928]
+Provider HTTPS listening on port [57927]
+
+The socks5/http compatible proxy interface will be available on port 4140. The above mock providers can be
+accessed directly, but for simplicity, you may wish to route your application's outbound traffic through
+this single endpoint. Configure your proxy settings according to your specific language or library, most
+of which can be configured with environment variables:
+  export http_proxy=socks5h://localhost:4140
+  export https_proxy=socks5h://localhost:4140
+  export tcp_proxy=socks5h://localhost:4140
+  export grpc_proxy=http://$(hostname):4140
+
+
+mocking traffic sent from your app
+recorded mock requests / responses are being written to proxymock/mocked-2025-05-27_17-38-19.299116Z
+Press ctrl-c to interrupt
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Error: responder failed: mocks server (responder) failed: failed to run providers: port 5432 is not available - is something already listening on this port?
+Usage:
+  proxymock mock [flags]
+
+Aliases:
+  mock, run
+
+Examples:
+# source mock data from the default directory (./proxymock)
+proxymock mock --verbose
+
+# source mock data from one directory and write responses to another
+proxymock mock --in ./my-recordings --out ./mocked-responses
+
+Flags:
+  -h, --help                     help for mock
+      --in strings               directories to read (recursively) mock files from (default [./proxymock])
+      --no-out                   do not write observed mock requests / responses to disk
+      --out string               directory to write new mock request / response files to - MATCH, NO_MATCH, AND PASSTHROUGH seen by mock server (default "proxymock/mocked-2025-05-27_17-38-19.299116Z")
+      --proxy-out-port int       port where proxymock will listen for outbound connections (your app -> external services) to mock, or passthrough to the real thing when no mock is matched (default 4140)
+  -s, --service stringToString   port mapping for mocked backends when predictable ports are needed, for example: --service mysql=3306 --service postgres=5432 (default [])
+      --timeout duration         set timeout for the command, like 10s, 5m, or 1h (default 12h0m0s)
+
+Global Flags:
+      --app-url string   URL of the speedscale app
+      --config string    Config file (default ${HOME}/.speedscale/config.yaml)
+  -c, --context string   Uses a specific context from those listed in ${HOME}/.speedscale/config.yaml
+      --exit-zero        Always exit with status code 0
+  -v, --verbose          Verbose output
+
+responder failed: mocks server (responder) failed: failed to run providers: port 5432 is not available - is something already listening on this port?

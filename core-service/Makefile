@@ -4,6 +4,14 @@
 APP_NAME = core-service
 DOCKER_IMAGE = ghcr.io/kenahrens/crm-demo/core-service:latest
 
+# Define proxymock environment variables
+PROXYMOCK_ENV = http_proxy=socks5h://localhost:4140 \
+                https_proxy=socks5h://localhost:4140 \
+                SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+
+# Find first recording directory
+PROXYMOCK_RECORDING := $(shell find ./proxymock -name "recorded-*" -type d | head -n 1)
+
 # Build the application
 build:
 	go build -o $(APP_NAME) ./cmd/main.go
@@ -19,6 +27,30 @@ test:
 # Clean build artifacts
 clean:
 	rm -f $(APP_NAME)
+
+integration-test: build proxymock-mock
+	mkdir -p logs
+	echo "Starting core-service in background with proxymock..."
+	$(PROXYMOCK_ENV) ./core-service > logs/core-service.log 2>&1 &
+	echo "Waiting for core-service to start..."
+	sleep 2
+	echo "Running integration tests with proxymock..."
+	proxymock replay --in $(PROXYMOCK_RECORDING) --fail-if requests.response-pct!=100
+	echo "Cleaning up..."
+	-pkill -f "core-service" || true
+	-pkill -f "proxymock" || true
+	echo "Integration tests completed. See logs in the logs directory."
+
+proxymock-mock:
+	mkdir -p logs
+	nohup proxymock mock --in $(PROXYMOCK_RECORDING) > logs/proxymock-mock.log 2>&1 & \
+	sleep 2
+	@if ! pgrep -f "proxymock mock" > /dev/null; then \
+		echo "Error: Proxymock is NOT mocking!"; \
+		cat logs/proxymock-mock.log; \
+		exit 1; \
+	fi
+	@echo "Proxymock started successfully."
 
 # Build Docker image
 docker-build:

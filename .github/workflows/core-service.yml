@@ -25,14 +25,26 @@ jobs:
           cache: true
           cache-dependency-path: core-service/go.sum
 
+      - name: Setup proxymock
+        env:
+          PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
+        run: |
+          mkdir -p .speedscale
+          curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
+          echo "$HOME/.speedscale" >> $GITHUB_PATH
+          $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_API_KEY"
+
       - name: Install dependencies
         run: cd core-service && go mod download
 
       - name: Build
         run: cd core-service && make build
 
-      - name: Test
+      - name: Run unit tests
         run: cd core-service && go test -v ./...
+
+      - name: Run integration tests
+        run: cd core-service && make integration-test
 
   docker:
     needs: build

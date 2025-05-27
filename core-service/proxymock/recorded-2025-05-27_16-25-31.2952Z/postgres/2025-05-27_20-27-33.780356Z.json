@@ -1,0 +1,186 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-05-27T20:27:33.780356Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.532",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "100",
+    "source": "goproxy"
+  },
+  "uuid": "8jJrUb56S4ihKxfePX8GVg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "postgres:5432",
+  "command": "Describe Prepared Statement",
+  "location": "SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at FROM contacts WHERE account_id = $1 ORDER BY last_name, first_name",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PREPARED_STATEMENT",
+        "parseRequest": {
+          "query": "SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at \n                      FROM contacts WHERE account_id = $1 ORDER BY last_name, first_name"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "parameterDescription": {
+              "parameterOids": [
+                2950
+              ]
+            }
+          },
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "first_name",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "last_name",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "email",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "phone",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "title",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "account_id",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "address",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 8,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "city",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 9,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "state",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 10,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "zip",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 11,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 24
+                },
+                {
+                  "name": "country",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 12,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 13,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16423,
+                  "tableAttributeNumber": 14,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "4",
+    "startTime": "2025-05-27T20:26:32.484787Z",
+    "downstream": {
+      "established": "2025-05-27T20:26:32.465536Z",
+      "ipAddress": "127.0.0.1",
+      "port": 61665,
+      "bytesSent": "825"
+    },
+    "upstream": {
+      "established": "2025-05-27T20:26:32.467260Z",
+      "ipAddress": "192.168.68.51",
+      "port": 5432,
+      "hostname": "postgres",
+      "bytesSent": "2136"
+    }
+  }
+}
