@@ -39,7 +39,8 @@ integration-test: build proxymock-mock
 	echo "Cleaning up..."
 	-pkill -f "core-service" || true
 	-pkill -f "proxymock" || true
-	echo "Integration tests completed. See logs in the logs directory."
+	echo "Integration tests completed. Application logs:"
+	cat logs/core-service.log
 
 proxymock-mock:
 	mkdir -p logs

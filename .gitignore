@@ -22,6 +22,9 @@
 go.work
 go.work.sum
 
+# Build files
+core-service/core-service
+
 # JavaScript/Node.js specific ignores
 node_modules/
 npm-debug.log
