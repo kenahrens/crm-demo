@@ -56,7 +56,7 @@ integration-test: build proxymock-mock
 
 proxymock-mock:
 	mkdir -p logs
-	nohup proxymock mock --in $(PROXYMOCK_RECORDING) > logs/proxymock-mock.log 2>&1 & \
+	proxymock mock --in $(PROXYMOCK_RECORDING) > logs/proxymock-mock.log 2>&1 &
 	sleep 2
 	@echo "Proxymock started successfully."
 
