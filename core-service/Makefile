@@ -37,7 +37,7 @@ integration-test: build proxymock-mock
 	@echo "Waiting for core-service to start..."
 	sleep 10
 	@echo "Running integration tests with proxymock..."
-	proxymock replay --in $(PROXYMOCK_RECORDING) --fail-if requests.response-pct!=10
+	proxymock replay --in $(PROXYMOCK_RECORDING) --fail-if requests.response-pct!=100
 	@echo "Cleaning up..."
 	-pkill -f "core-service" || true
 	-pkill -f "proxymock" || true

@@ -46,6 +46,13 @@ jobs:
       - name: Run integration tests
         run: cd core-service && make integration-test
 
+      - name: Store test logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-logs
+          path: core-service/logs/
+          retention-days: 5
+
   docker:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
