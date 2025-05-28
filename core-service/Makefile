@@ -12,6 +12,8 @@ PROXYMOCK_ENV = http_proxy=socks5h://localhost:4140 \
 # Find first recording directory
 PROXYMOCK_RECORDING := $(shell find ./proxymock -name "recorded-*" -type d | head -n 1)
 
+STATUS_FILE = proxymock.status
+
 # Build the application
 build:
 	go build -o $(APP_NAME) ./cmd/main.go
@@ -35,15 +37,22 @@ integration-test: build proxymock-mock
 	@echo "Waiting for core-service to start..."
 	sleep 2
 	@echo "Running integration tests with proxymock..."
-	proxymock replay --in $(PROXYMOCK_RECORDING) --fail-if requests.response-pct!=100
+	- proxymock replay --in $(PROXYMOCK_RECORDING) --fail-if requests.response-pct!=100 > logs/proxymock-replay.log 2>&1; echo $$? > $(STATUS_FILE)
+	cat logs/proxymock-mock.log
+	cat logs/core-service.log
+	cat logs/proxymock-replay.log
 	@echo "Cleaning up..."
 	-pkill -f "core-service" || true
 	-pkill -f "proxymock" || true
-	@echo "Integration tests completed. See logs in the logs directory."
-
-integration-test-show-logs: integration-test
-	cat logs/proxymock-mock.log
-	cat logs/core-service.log
+	@echo "-------------------------------------"
+	@{ \
+	    status=$$(cat $(STATUS_FILE)); \
+	    echo "Command exited with status: $$status"; \
+	    if [ "$$status" -ne 0 ]; then \
+	        echo "Error: The command failed. See log above."; \
+	        exit $$status; \
+	    fi \
+	}
 
 proxymock-mock:
 	mkdir -p logs
