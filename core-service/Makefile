@@ -42,11 +42,12 @@ integration-test: build proxymock-mock
 	@echo "Integration tests completed. See logs in the logs directory."
 
 integration-test-show-logs: integration-test
+	cat logs/proxymock-mock.log
 	cat logs/core-service.log
 
 proxymock-mock:
 	mkdir -p logs
-	proxymock mock --in $(PROXYMOCK_RECORDING) > logs/proxymock-mock.log 2>&1 & \
+	nohup proxymock mock --in $(PROXYMOCK_RECORDING) > logs/proxymock-mock.log 2>&1 & \
 	sleep 2
 	@echo "Proxymock started successfully."
 
