@@ -35,32 +35,53 @@ func New() (*DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
 
-	// Open database connection
+	// Open database connection with retries
 	log.Println("Opening database connection...")
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Printf("ERROR: Failed to open database connection: %v", err)
-		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	var db *sql.DB
+	var err error
+	maxRetries := 10
+	var lastErr error
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		db, err = sql.Open("postgres", connStr)
+		if err != nil {
+			log.Printf("ERROR: Failed to open database connection (attempt %d/%d): %v", attempt, maxRetries, err)
+			lastErr = err
+			time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
+			continue
+		}
+
+		// Set connection pool parameters
+		db.SetMaxOpenConns(25)
+		db.SetMaxIdleConns(5)
+		db.SetConnMaxLifetime(5 * time.Minute)
+		log.Println("Database connection pool configured")
+
+		// Check database connection
+		log.Printf("Testing database connection (attempt %d/%d)...", attempt, maxRetries)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+		if err := db.PingContext(ctx); err != nil {
+			log.Printf("ERROR: Failed to ping database (attempt %d/%d): %v", attempt, maxRetries, err)
+			cancel()
+			lastErr = err
+			// Close the DB connection before retrying
+			db.Close()
+
+			if attempt < maxRetries {
+				retryDelay := time.Duration(attempt) * time.Second
+				log.Printf("Retrying in %v...", retryDelay)
+				time.Sleep(retryDelay)
+				continue
+			}
+		} else {
+			cancel()
+			log.Println("Successfully connected to the database")
+			return &DB{db}, nil
+		}
 	}
 
-	// Set connection pool parameters
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	log.Println("Database connection pool configured")
-
-	// Check database connection
-	log.Println("Testing database connection...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
-		log.Printf("ERROR: Failed to ping database: %v", err)
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
-
-	log.Println("Successfully connected to the database")
-	return &DB{db}, nil
+	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, lastErr)
 }
 
 // RunMigrations runs database migrations

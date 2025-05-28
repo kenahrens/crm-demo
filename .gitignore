@@ -24,6 +24,8 @@ go.work.sum
 
 # Build files
 core-service/core-service
+core-service/logs
+core-service/proxymock.status
 
 # JavaScript/Node.js specific ignores
 node_modules/
