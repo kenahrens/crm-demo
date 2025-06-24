@@ -1,0 +1,109 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-05-28T20:37:39.868356Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.532",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "125",
+    "source": "goproxy"
+  },
+  "uuid": "k3vdpHK8RymfjRcg4M8CUw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "postgres:5432",
+  "command": "Query",
+  "location": "SELECT id, content, created_by, created_at, updated_at FROM notes ORDER BY created_at DESC",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "SELECT id, content, created_by, created_at, updated_at FROM notes ORDER BY created_at DESC"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "content",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 25,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_by",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16467,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 0"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2025-05-28T20:37:14.623445Z",
+    "downstream": {
+      "established": "2025-05-28T20:37:14.614371Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57735,
+      "bytesSent": "1732"
+    },
+    "upstream": {
+      "established": "2025-05-28T20:37:14.615772Z",
+      "ipAddress": "192.168.68.51",
+      "port": 5432,
+      "hostname": "postgres",
+      "bytesSent": "3214"
+    }
+  }
+}

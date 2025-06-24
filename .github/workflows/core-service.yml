@@ -50,7 +50,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-logs
-          path: core-service/logs/
+          path: |
+            core-service/logs/
+            core-service/proxymock/
           retention-days: 5
 
   docker:

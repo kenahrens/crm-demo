@@ -1,0 +1,80 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-05-28T20:27:07.836709Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.532",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "20",
+    "source": "goproxy"
+  },
+  "uuid": "7cLEkHAKQqCp08ufnFaygw==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "postgres:5432",
+  "command": "Describe Prepared Statement",
+  "location": "SELECT pg_advisory_lock($1)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PREPARED_STATEMENT",
+        "parseRequest": {
+          "query": "SELECT pg_advisory_lock($1)"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "parameterDescription": {
+              "parameterOids": [
+                20
+              ]
+            }
+          },
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "pg_advisory_lock",
+                  "dataTypeOid": 2278,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-05-28T20:27:07.810870Z",
+    "downstream": {
+      "established": "2025-05-28T20:27:07.783261Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56330,
+      "bytesSent": "150"
+    },
+    "upstream": {
+      "established": "2025-05-28T20:27:07.784612Z",
+      "ipAddress": "192.168.68.51",
+      "port": 5432,
+      "hostname": "postgres",
+      "bytesSent": "327"
+    }
+  }
+}

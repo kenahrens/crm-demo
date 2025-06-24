@@ -1,0 +1,149 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-05-28T20:37:39.169043Z",
+  "l7protocol": "postgres",
+  "duration": 2,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.532",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "122",
+    "source": "goproxy"
+  },
+  "uuid": "9cQTuNQeS76C6UI9VsnExA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "network_address": "postgres:5432",
+  "command": "Query",
+  "location": "SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at FROM opportunities ORDER BY close_date, opportunity_name",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at \n              FROM opportunities ORDER BY close_date, opportunity_name"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "opportunity_name",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "account_id",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "primary_contact_id",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 2950,
+                  "dataTypeSize": 16,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "stage",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "amount",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 1700,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 786438
+                },
+                {
+                  "name": "close_date",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 1082,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "probability",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 8,
+                  "dataTypeOid": 1700,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 327686
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 9,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16438,
+                  "tableAttributeNumber": 10,
+                  "dataTypeOid": 1184,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 0"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "netinfo": {
+    "id": "3",
+    "startTime": "2025-05-28T20:37:14.623445Z",
+    "downstream": {
+      "established": "2025-05-28T20:37:14.614371Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57735,
+      "bytesSent": "1636"
+    },
+    "upstream": {
+      "established": "2025-05-28T20:37:14.615772Z",
+      "ipAddress": "192.168.68.51",
+      "port": 5432,
+      "hostname": "postgres",
+      "bytesSent": "3053"
+    }
+  }
+}
