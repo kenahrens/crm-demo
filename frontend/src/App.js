@@ -40,8 +40,8 @@ const theme = createTheme({
 });
 
 function App() {
-  const { sidebarOpen } = useSelector((state) => state.ui);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { sidebarOpen = true } = useSelector((state) => state.ui || {});
+  const { isAuthenticated = false } = useSelector((state) => state.auth || {});
 
   return (
     <ThemeProvider theme={theme}>

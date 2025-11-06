@@ -13,112 +13,8 @@ This CRM demo showcases enterprise-grade architecture patterns and modern develo
 - **Opportunity Tracking**: Monitor sales pipeline with stage-based opportunity management
 - **Notes System**: Flexible note-taking with multi-entity associations
 - **Authentication**: JWT-based secure authentication system
-- **Real-time Updates**: Responsive UI with Redux state management
+- **Real-time Updates**: Responsive UI with real-time state updates
 - **API-First Design**: OpenAPI 3.0 specification for clear API contracts
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        UI[React UI<br/>Material-UI Components]
-        Redux[Redux Store<br/>State Management]
-        API_Client[Axios API Client<br/>Interceptors]
-    end
-    
-    subgraph "Backend Layer"
-        Gateway[API Gateway<br/>:8080]
-        Auth[Auth Middleware<br/>JWT Validation]
-        Handlers[REST Handlers<br/>Gin Framework]
-        Repository[Repository Layer<br/>Data Access]
-    end
-    
-    subgraph "Data Layer"
-        PostgreSQL[(PostgreSQL<br/>Database)]
-        Migrations[DB Migrations<br/>Schema Management]
-    end
-    
-    subgraph "Infrastructure"
-        Docker[Docker Containers]
-        K8s[Kubernetes<br/>Orchestration]
-        ProxyMock[ProxyMock<br/>API Testing]
-    end
-    
-    UI --> Redux
-    Redux --> API_Client
-    API_Client -->|HTTP/REST| Gateway
-    Gateway --> Auth
-    Auth --> Handlers
-    Handlers --> Repository
-    Repository --> PostgreSQL
-    Migrations --> PostgreSQL
-    
-    Docker -.-> UI
-    Docker -.-> Gateway
-    Docker -.-> PostgreSQL
-    K8s -.-> Docker
-    ProxyMock -.->|Traffic Recording| Gateway
-    
-    style UI fill:#61dafb,stroke:#333,stroke-width:2px
-    style Redux fill:#764abc,stroke:#333,stroke-width:2px
-    style Gateway fill:#00add8,stroke:#333,stroke-width:2px
-    style PostgreSQL fill:#336791,stroke:#333,stroke-width:2px
-    style Docker fill:#2496ed,stroke:#333,stroke-width:2px
-```
-
-### System Components
-
-#### **Frontend (React + Redux)**
-- Single Page Application with React Router
-- Material-UI component library for consistent design
-- Redux Toolkit for predictable state management
-- Axios interceptors for API communication
-- JWT token management for authentication
-
-#### **Backend (Go + Gin)**
-- RESTful API following OpenAPI 3.0 specification
-- Repository pattern for clean data access
-- JWT middleware for secure endpoints
-- Database connection pooling
-- Structured logging and error handling
-
-#### **Database (PostgreSQL)**
-- Normalized schema with foreign key constraints
-- UUID primary keys for distributed systems compatibility
-- Timestamp tracking for audit trails
-- Migration-based schema management
-
-## 📊 Data Model
-
-The CRM system is built around four core entities:
-
-- **Accounts**: Companies or organizations
-- **Contacts**: Individual people associated with accounts
-- **Opportunities**: Sales deals in various stages
-- **Notes**: Flexible annotations linked to any entity
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Language**: Go 1.21+
-- **Framework**: Gin Web Framework
-- **Database**: PostgreSQL 15+
-- **Authentication**: JWT (JSON Web Tokens)
-- **API Documentation**: OpenAPI 3.0
-
-### Frontend
-- **Framework**: React 18
-- **State Management**: Redux Toolkit
-- **UI Components**: Material-UI v5
-- **HTTP Client**: Axios
-- **Routing**: React Router v6
-- **Build Tool**: Create React App
-
-### Infrastructure
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
-- **API Testing**: ProxyMock for traffic recording/replay
-- **Database Migrations**: golang-migrate
 
 ## 🚦 Getting Started
 
@@ -158,6 +54,38 @@ The CRM system is built around four core entities:
 5. **Access the application**
    - Frontend: http://localhost:3000
    - API: http://localhost:8080/v1/api
+
+### Default credentials
+
+There is no default user. Create the first admin user, then sign in:
+
+1. Temporarily disable auth as directed in `core-service/tests/test.http` (header comments), then run the service.
+2. Create the admin user via API:
+   ```bash
+   curl -X POST http://localhost:8080/v1/api/users \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "username": "admin",
+       "email": "admin@example.com",
+       "password": "adminpassword",
+       "role": "admin"
+     }'
+   ```
+3. Re-enable auth and log in with:
+   - Email: `admin@example.com`
+   - Password: `adminpassword`
+
+Optional sample user (non-admin):
+```bash
+curl -X POST http://localhost:8080/v1/api/users \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "testuser",
+    "email": "testuser@example.com",
+    "password": "testpassword",
+    "role": "user"
+  }'
+```
 
 ### Docker Deployment
 
@@ -214,9 +142,53 @@ crm-demo/
 │   ├── src/             # Source code
 │   ├── public/          # Static assets
 │   └── build/           # Production build
-├── k8s/                 # Kubernetes manifests
 └── docs/                # Additional documentation
 ```
+
+## 🏗️ Architecture
+
+```mermaid
+graph LR
+    Frontend[Frontend<br/>React App]
+    Backend[Backend<br/>Core Service]
+    DB[(PostgreSQL)]
+    PM[ProxyMock<br/>Record & Replay]
+
+    Frontend -->|HTTP/REST :3000| Backend
+    Backend -->|:8080| DB
+
+    PM -.->|Intercept Inbound| Frontend
+    PM -.->|Intercept Outbound| Backend
+
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style Backend fill:#00add8,stroke:#333,stroke-width:2px
+    style DB fill:#336791,stroke:#333,stroke-width:2px
+    style PM fill:#ff6b6b,stroke:#333,stroke-width:2px
+```
+
+### Components
+
+- **Frontend**: React single-page application with Material-UI
+- **Backend**: Go REST API service with Gin framework
+- **PostgreSQL**: Database for persistent storage
+- **ProxyMock**: Tool for recording and replaying API traffic for testing
+
+### Technology Stack
+
+**Backend**: Go 1.21+, Gin Framework, PostgreSQL 15+, JWT Authentication
+
+**Frontend**: React 18, Material-UI v5, Axios
+
+**Testing**: ProxyMock for traffic recording/replay
+
+## 📊 Data Model
+
+The CRM system manages four core entities:
+
+- **Accounts**: Companies or organizations
+- **Contacts**: Individual people associated with accounts
+- **Opportunities**: Sales deals in various stages
+- **Notes**: Flexible annotations linked to any entity
 
 ## 🤝 Contributing
 

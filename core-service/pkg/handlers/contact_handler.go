@@ -108,6 +108,13 @@ func (h *ContactHandler) CreateContact(c *gin.Context) {
 		return
 	}
 
+    // Always set CreatedBy from authenticated user context
+    if uidVal, exists := c.Get("user_id"); exists {
+        if uid, ok := uidVal.(uuid.UUID); ok {
+            contactData.CreatedBy = uid
+        }
+    }
+
 	// Validate account ID if provided
 	if contactData.AccountID != uuid.Nil {
 		// Optional: Check if account exists

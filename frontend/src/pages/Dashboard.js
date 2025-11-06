@@ -51,7 +51,7 @@ const SummaryCard = ({ title, count, icon, color, onClick }) => (
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { accounts, total: accountTotal } = useSelector((state) => state.accounts);
+  const { accounts = [], total: accountTotal = 0 } = useSelector((state) => state.accounts || {});
   
   // For demo purposes - would normally fetch all entity counts from a dedicated API
   const contactsCount = 0;

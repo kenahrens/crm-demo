@@ -21,7 +21,7 @@ func NewOpportunityRepository(db *DB) *OpportunityRepository {
 
 // GetAllOpportunities retrieves all opportunities from the database
 func (r *OpportunityRepository) GetAllOpportunities() ([]models.Opportunity, error) {
-	query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at 
+    query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at, created_by 
               FROM opportunities ORDER BY close_date, opportunity_name`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -36,7 +36,7 @@ func (r *OpportunityRepository) GetAllOpportunities() ([]models.Opportunity, err
 		var closeDate sql.NullTime
 		var amount, probability sql.NullFloat64
 
-		if err := rows.Scan(
+        if err := rows.Scan(
 			&opportunity.ID,
 			&opportunity.OpportunityName,
 			&accountID,
@@ -46,7 +46,8 @@ func (r *OpportunityRepository) GetAllOpportunities() ([]models.Opportunity, err
 			&closeDate,
 			&probability,
 			&opportunity.CreatedAt,
-			&opportunity.UpdatedAt,
+            &opportunity.UpdatedAt,
+            &opportunity.CreatedBy,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning opportunity row: %w", err)
 		}
@@ -93,7 +94,7 @@ func (r *OpportunityRepository) GetAllOpportunities() ([]models.Opportunity, err
 
 // GetOpportunityByID retrieves a single opportunity by ID
 func (r *OpportunityRepository) GetOpportunityByID(id uuid.UUID) (*models.Opportunity, error) {
-	query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at 
+    query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at, created_by 
               FROM opportunities WHERE id = $1`
 
 	var opportunity models.Opportunity
@@ -101,7 +102,7 @@ func (r *OpportunityRepository) GetOpportunityByID(id uuid.UUID) (*models.Opport
 	var closeDate sql.NullTime
 	var amount, probability sql.NullFloat64
 
-	err := r.db.QueryRow(query, id).Scan(
+    err := r.db.QueryRow(query, id).Scan(
 		&opportunity.ID,
 		&opportunity.OpportunityName,
 		&accountID,
@@ -111,7 +112,8 @@ func (r *OpportunityRepository) GetOpportunityByID(id uuid.UUID) (*models.Opport
 		&closeDate,
 		&probability,
 		&opportunity.CreatedAt,
-		&opportunity.UpdatedAt,
+        &opportunity.UpdatedAt,
+        &opportunity.CreatedBy,
 	)
 
 	if err != nil {
@@ -156,7 +158,7 @@ func (r *OpportunityRepository) GetOpportunityByID(id uuid.UUID) (*models.Opport
 
 // GetOpportunitiesByAccountID retrieves all opportunities for a specific account
 func (r *OpportunityRepository) GetOpportunitiesByAccountID(accountID uuid.UUID) ([]models.Opportunity, error) {
-	query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at 
+    query := `SELECT id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at, created_by 
               FROM opportunities WHERE account_id = $1 ORDER BY close_date, opportunity_name`
 	rows, err := r.db.Query(query, accountID)
 	if err != nil {
@@ -171,7 +173,7 @@ func (r *OpportunityRepository) GetOpportunitiesByAccountID(accountID uuid.UUID)
 		var closeDate sql.NullTime
 		var amount, probability sql.NullFloat64
 
-		if err := rows.Scan(
+        if err := rows.Scan(
 			&opportunity.ID,
 			&opportunity.OpportunityName,
 			&opportunity.AccountID,
@@ -181,7 +183,8 @@ func (r *OpportunityRepository) GetOpportunitiesByAccountID(accountID uuid.UUID)
 			&closeDate,
 			&probability,
 			&opportunity.CreatedAt,
-			&opportunity.UpdatedAt,
+            &opportunity.UpdatedAt,
+            &opportunity.CreatedBy,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning opportunity row: %w", err)
 		}
@@ -220,9 +223,9 @@ func (r *OpportunityRepository) GetOpportunitiesByAccountID(accountID uuid.UUID)
 
 // CreateOpportunity creates a new opportunity in the database
 func (r *OpportunityRepository) CreateOpportunity(data models.OpportunityCreate) (*models.Opportunity, error) {
-	query := `INSERT INTO opportunities (opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability) 
-              VALUES ($1, $2, $3, $4, $5, $6, $7) 
-              RETURNING id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at`
+    query := `INSERT INTO opportunities (opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_by) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+              RETURNING id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at, created_by`
 
 	var closeDate *time.Time
 	if data.CloseDate != "" {
@@ -252,7 +255,13 @@ func (r *OpportunityRepository) CreateOpportunity(data models.OpportunityCreate)
 		probability = data.Probability
 	}
 
-	err := r.db.QueryRow(
+    // Use sql.Null* for nullable returned columns to avoid scan errors
+    var scannedPrimaryContactID sql.NullString
+    var scannedCloseDate sql.NullTime
+    var scannedAmount sql.NullFloat64
+    var scannedProbability sql.NullFloat64
+
+    err := r.db.QueryRow(
 		query,
 		data.OpportunityName,
 		data.AccountID,
@@ -260,25 +269,48 @@ func (r *OpportunityRepository) CreateOpportunity(data models.OpportunityCreate)
 		data.Stage,
 		amount,
 		closeDateParam,
-		probability,
+        probability,
+        data.CreatedBy,
 	).Scan(
 		&opportunity.ID,
 		&opportunity.OpportunityName,
-		&opportunity.AccountID,
-		&opportunity.PrimaryContactID,
+        &opportunity.AccountID,
+        &scannedPrimaryContactID,
 		&opportunity.Stage,
-		&opportunity.Amount,
-		&opportunity.CloseDate,
-		&opportunity.Probability,
+        &scannedAmount,
+        &scannedCloseDate,
+        &scannedProbability,
 		&opportunity.CreatedAt,
-		&opportunity.UpdatedAt,
+        &opportunity.UpdatedAt,
+        &opportunity.CreatedBy,
 	)
 
-	if err != nil {
-		return nil, fmt.Errorf("error creating opportunity: %w", err)
-	}
+    if err != nil {
+        return nil, fmt.Errorf("error creating opportunity: %w", err)
+    }
 
-	return &opportunity, nil
+    // Map nullable scanned fields into the model
+    if scannedPrimaryContactID.Valid {
+        parsedID, parseErr := uuid.Parse(scannedPrimaryContactID.String)
+        if parseErr != nil {
+            return nil, fmt.Errorf("error parsing primary contact ID: %w", parseErr)
+        }
+        opportunity.PrimaryContactID = parsedID
+    }
+
+    if scannedAmount.Valid {
+        opportunity.Amount = scannedAmount.Float64
+    }
+
+    if scannedCloseDate.Valid {
+        opportunity.CloseDate = &scannedCloseDate.Time
+    }
+
+    if scannedProbability.Valid {
+        opportunity.Probability = scannedProbability.Float64
+    }
+
+    return &opportunity, nil
 }
 
 // UpdateOpportunity updates an existing opportunity in the database
@@ -303,9 +335,15 @@ func (r *OpportunityRepository) UpdateOpportunity(id uuid.UUID, data models.Oppo
               probability = $7,
               updated_at = NOW()
               WHERE id = $8
-              RETURNING id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at`
+              RETURNING id, opportunity_name, account_id, primary_contact_id, stage, amount, close_date, probability, created_at, updated_at, created_by`
 
 	var opportunity models.Opportunity
+	// Use sql.Null* for nullable returned columns to avoid scan errors
+	var scannedPrimaryContactID sql.NullString
+	var scannedCloseDate sql.NullTime
+	var scannedAmount sql.NullFloat64
+	var scannedProbability sql.NullFloat64
+
 	var primaryContactID interface{} = nil
 	var accountID interface{} = nil
 
@@ -344,13 +382,14 @@ func (r *OpportunityRepository) UpdateOpportunity(id uuid.UUID, data models.Oppo
 		&opportunity.ID,
 		&opportunity.OpportunityName,
 		&opportunity.AccountID,
-		&opportunity.PrimaryContactID,
+		&scannedPrimaryContactID,
 		&opportunity.Stage,
-		&opportunity.Amount,
-		&opportunity.CloseDate,
-		&opportunity.Probability,
+		&scannedAmount,
+		&scannedCloseDate,
+		&scannedProbability,
 		&opportunity.CreatedAt,
 		&opportunity.UpdatedAt,
+		&opportunity.CreatedBy,
 	)
 
 	if err != nil {
@@ -358,6 +397,27 @@ func (r *OpportunityRepository) UpdateOpportunity(id uuid.UUID, data models.Oppo
 			return nil, nil // No opportunity found with this ID
 		}
 		return nil, fmt.Errorf("error updating opportunity: %w", err)
+	}
+
+	// Map nullable scanned fields into the model
+	if scannedPrimaryContactID.Valid {
+		parsedID, parseErr := uuid.Parse(scannedPrimaryContactID.String)
+		if parseErr != nil {
+			return nil, fmt.Errorf("error parsing primary contact ID: %w", parseErr)
+		}
+		opportunity.PrimaryContactID = parsedID
+	}
+
+	if scannedAmount.Valid {
+		opportunity.Amount = scannedAmount.Float64
+	}
+
+	if scannedCloseDate.Valid {
+		opportunity.CloseDate = &scannedCloseDate.Time
+	}
+
+	if scannedProbability.Valid {
+		opportunity.Probability = scannedProbability.Float64
 	}
 
 	return &opportunity, nil

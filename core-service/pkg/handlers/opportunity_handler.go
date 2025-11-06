@@ -108,6 +108,13 @@ func (h *OpportunityHandler) CreateOpportunity(c *gin.Context) {
 		return
 	}
 
+    // Set CreatedBy from authenticated user context
+    if uidVal, exists := c.Get("user_id"); exists {
+        if uid, ok := uidVal.(uuid.UUID); ok {
+            opportunityData.CreatedBy = uid
+        }
+    }
+
 	opportunity, err := h.repo.CreateOpportunity(opportunityData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

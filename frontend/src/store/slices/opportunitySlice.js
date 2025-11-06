@@ -92,18 +92,27 @@ const opportunitySlice = createSlice({
       .addCase(fetchOpportunities.fulfilled, (state, action) => {
         state.loading = false;
         // Ensure opportunities is always an array - handle both direct array response and nested response
+        let opportunities = [];
         if (Array.isArray(action.payload)) {
-          state.opportunities = action.payload;
+          opportunities = action.payload;
         } else if (action.payload && action.payload.data && Array.isArray(action.payload.data)) {
-          state.opportunities = action.payload.data;
+          opportunities = action.payload.data;
         } else if (action.payload && typeof action.payload === 'object') {
           // If it's an object but not in expected format, try to extract data
-          state.opportunities = Array.isArray(Object.values(action.payload)[0]) 
+          opportunities = Array.isArray(Object.values(action.payload)[0]) 
             ? Object.values(action.payload)[0] 
             : [];
-        } else {
-          state.opportunities = [];
         }
+        
+        // Map API fields to frontend fields
+        state.opportunities = opportunities.map(opp => ({
+          ...opp,
+          name: opp.opportunity_name || opp.name,
+          status: opp.stage || opp.status,
+          closeDate: opp.close_date || opp.closeDate,
+          account: opp.account || null,
+          accountId: opp.account_id || opp.accountId
+        }));
       })
       .addCase(fetchOpportunities.rejected, (state, action) => {
         state.loading = false;
@@ -116,7 +125,15 @@ const opportunitySlice = createSlice({
       })
       .addCase(fetchOpportunity.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentOpportunity = action.payload;
+        // Map API fields to frontend fields
+        state.currentOpportunity = {
+          ...action.payload,
+          name: action.payload.opportunity_name || action.payload.name,
+          status: action.payload.stage || action.payload.status,
+          closeDate: action.payload.close_date || action.payload.closeDate,
+          account: action.payload.account || null,
+          accountId: action.payload.account_id || action.payload.accountId
+        };
       })
       .addCase(fetchOpportunity.rejected, (state, action) => {
         state.loading = false;
@@ -129,8 +146,17 @@ const opportunitySlice = createSlice({
       })
       .addCase(createOpportunity.fulfilled, (state, action) => {
         state.loading = false;
-        state.opportunities.push(action.payload);
-        state.currentOpportunity = action.payload;
+        // Map API fields to frontend fields
+        const mappedOpportunity = {
+          ...action.payload,
+          name: action.payload.opportunity_name || action.payload.name,
+          status: action.payload.stage || action.payload.status,
+          closeDate: action.payload.close_date || action.payload.closeDate,
+          account: action.payload.account || null,
+          accountId: action.payload.account_id || action.payload.accountId
+        };
+        state.opportunities.push(mappedOpportunity);
+        state.currentOpportunity = mappedOpportunity;
       })
       .addCase(createOpportunity.rejected, (state, action) => {
         state.loading = false;
@@ -143,10 +169,18 @@ const opportunitySlice = createSlice({
       })
       .addCase(updateOpportunity.fulfilled, (state, action) => {
         state.loading = false;
+        // Map API fields to frontend fields
+        const mappedOpportunity = {
+          ...action.payload,
+          name: action.payload.opportunity_name || action.payload.name,
+          status: action.payload.stage || action.payload.status,
+          closeDate: action.payload.close_date || action.payload.closeDate,
+          account: action.payload.account || null
+        };
         state.opportunities = state.opportunities.map(opportunity =>
-          opportunity.id === action.payload.id ? action.payload : opportunity
+          opportunity.id === action.payload.id ? mappedOpportunity : opportunity
         );
-        state.currentOpportunity = action.payload;
+        state.currentOpportunity = mappedOpportunity;
       })
       .addCase(updateOpportunity.rejected, (state, action) => {
         state.loading = false;

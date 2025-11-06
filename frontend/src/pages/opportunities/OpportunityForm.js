@@ -95,16 +95,26 @@ const OpportunityForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    const submissionData = {
-      ...formData,
+    const userId = user?.id || user?.user?.id || user?.userId;
+    
+    const formattedCloseDate = formData.closeDate
+      ? new Date(formData.closeDate).toISOString().slice(0, 10)
+      : null; // YYYY-MM-DD
+    
+    const apiData = {
+      opportunity_name: formData.name,
+      account_id: formData.accountId || null,
+      stage: formData.status,
       amount: formData.amount ? parseFloat(formData.amount) : null,
-      created_by: user.id
+      close_date: formattedCloseDate,
+      probability: null,
+      created_by: userId,
     };
     
     if (isEditMode) {
-      submissionData.updated_by = user.id;
+      apiData.updated_by = userId;
       
-      dispatch(updateOpportunity({ id, ...submissionData }))
+      dispatch(updateOpportunity({ id, ...apiData }))
         .unwrap()
         .then(() => {
           navigate(`/opportunities/${id}`);
@@ -118,7 +128,7 @@ const OpportunityForm = () => {
           });
         });
     } else {
-      dispatch(createOpportunity(submissionData))
+      dispatch(createOpportunity(apiData))
         .unwrap()
         .then((newOpportunity) => {
           navigate(`/opportunities/${newOpportunity.id}`);

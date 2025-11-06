@@ -19,7 +19,9 @@ import AddIcon from '@mui/icons-material/Add';
 import { fetchOpportunities } from '../../store/slices/opportunitySlice';
 
 const getStatusColor = (status) => {
-  switch (status.toLowerCase()) {
+  if (!status) return 'default';
+  const normalized = String(status).toLowerCase().trim();
+  switch (normalized) {
     case 'prospecting':
       return 'default';
     case 'qualification':
@@ -40,6 +42,7 @@ const getStatusColor = (status) => {
 const OpportunityList = () => {
   const dispatch = useDispatch();
   const { opportunities, loading, error } = useSelector((state) => state.opportunities);
+  const { accounts } = useSelector((state) => state.accounts);
 
   useEffect(() => {
     dispatch(fetchOpportunities());
@@ -91,12 +94,22 @@ const OpportunityList = () => {
             {opportunities.map((opportunity) => (
               <TableRow key={opportunity.id} hover component={Link} to={`/opportunities/${opportunity.id}`} sx={{ textDecoration: 'none', cursor: 'pointer' }}>
                 <TableCell>{opportunity.name}</TableCell>
-                <TableCell>{opportunity.account?.name || 'N/A'}</TableCell>
+                <TableCell>
+                  {
+                    (() => {
+                      const id = opportunity.account?.id || opportunity.accountId || opportunity.account_id;
+                      const account = accounts.find(a => a.id === id);
+                      return account?.name || 'N/A';
+                    })()
+                  }
+                </TableCell>
                 <TableCell>
                   {opportunity.amount ? `$${opportunity.amount.toLocaleString()}` : 'N/A'}
                 </TableCell>
                 <TableCell>
-                  {opportunity.closeDate ? new Date(opportunity.closeDate).toLocaleDateString() : 'N/A'}
+                  {opportunity.closeDate 
+                    ? new Date(opportunity.closeDate).toLocaleDateString(undefined, { timeZone: 'UTC' }) 
+                    : 'N/A'}
                 </TableCell>
                 <TableCell>
                   <Chip 

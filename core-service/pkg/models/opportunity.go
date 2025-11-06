@@ -29,8 +29,8 @@ type OpportunityCreate struct {
 	Stage            string    `json:"stage" binding:"required"`
 	Amount           float64   `json:"amount"`
 	CloseDate        string    `json:"close_date"`
-	Probability      float64   `json:"probability"`
-	CreatedBy        uuid.UUID `json:"created_by" binding:"required"`
+    Probability      float64   `json:"probability"`
+    CreatedBy        uuid.UUID `json:"created_by"`
 }
 
 // OpportunityUpdate is used for updating an existing opportunity
