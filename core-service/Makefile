@@ -9,8 +9,8 @@ PROXYMOCK_ENV = http_proxy=socks5h://localhost:4140 \
                 https_proxy=socks5h://localhost:4140 \
                 SSL_CERT_FILE=~/.speedscale/certs/tls.crt
 
-# Find first recording directory
-PROXYMOCK_RECORDING := $(shell find ./proxymock -name "recorded-*" -type d | head -n 1)
+# Find first recording directory (proxymock is at repo root, not in core-service)
+PROXYMOCK_RECORDING := $(shell find ../proxymock -name "recorded-*" -type d | head -n 1)
 
 STATUS_FILE = proxymock.status
 
