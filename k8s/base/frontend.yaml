@@ -81,4 +81,5 @@ spec:
           service:
             name: core-service
             port:
-              number: 8080 
+              number: 80
+

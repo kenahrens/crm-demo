@@ -8,91 +8,19 @@ This CRM demo showcases enterprise-grade architecture patterns and modern develo
 
 ### Key Features
 
-- **Account Management**: Track companies and organizations with detailed information
-- **Contact Management**: Maintain comprehensive contact records linked to accounts
-- **Opportunity Tracking**: Monitor sales pipeline with stage-based opportunity management
-- **Notes System**: Flexible note-taking with multi-entity associations
-- **Authentication**: JWT-based secure authentication system
-- **Real-time Updates**: Responsive UI with real-time state updates
-- **API-First Design**: OpenAPI 3.0 specification for clear API contracts
+- **Full-Stack CRM**: Complete account, contact, and opportunity management with JWT authentication
+- **Modern Tech Stack**: Go/Gin backend, React/Material-UI frontend, PostgreSQL database
+- **API-First Design**: RESTful API with OpenAPI 3.0 specification
+- **proxymock Integration**: Demonstrates traffic recording, mocking, and replay for advanced testing workflows
 
-## 🚦 Getting Started
+## 🚦 Prerequisites
 
-### Prerequisites
 - Go 1.21 or higher
 - Node.js 18+ and npm
 - PostgreSQL 15+
-- Docker and Docker Compose (optional)
 - Make (for build commands)
 
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/kenahrens/crm-demo.git
-   cd crm-demo
-   ```
-
-2. **Set up the database**
-   ```bash
-   make setup-db
-   ```
-
-3. **Start the backend**
-   ```bash
-   cd core-service
-   make run
-   ```
-
-4. **Start the frontend** (in a new terminal)
-   ```bash
-   cd frontend
-   npm install
-   make start
-   ```
-
-5. **Access the application**
-   - Frontend: http://localhost:3000
-   - API: http://localhost:8080/v1/api
-
-### Default credentials
-
-There is no default user. Create the first admin user, then sign in:
-
-1. Temporarily disable auth as directed in `core-service/tests/test.http` (header comments), then run the service.
-2. Create the admin user via API:
-   ```bash
-   curl -X POST http://localhost:8080/v1/api/users \
-     -H 'Content-Type: application/json' \
-     -d '{
-       "username": "admin",
-       "email": "admin@example.com",
-       "password": "adminpassword",
-       "role": "admin"
-     }'
-   ```
-3. Re-enable auth and log in with:
-   - Email: `admin@example.com`
-   - Password: `adminpassword`
-
-Optional sample user (non-admin):
-```bash
-curl -X POST http://localhost:8080/v1/api/users \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "username": "testuser",
-    "email": "testuser@example.com",
-    "password": "testpassword",
-    "role": "user"
-  }'
-```
-
-### Docker Deployment
-
-Build and run with Docker Compose:
-```bash
-docker-compose up --build
-```
+See [Architecture](#%EF%B8%8F-architecture) below for different ways to run this application.
 
 ## 📚 API Documentation
 
@@ -120,8 +48,30 @@ cd frontend
 npm test
 ```
 
-### API Testing with ProxyMock
-The project includes ProxyMock integration for recording and replaying API traffic, enabling realistic testing scenarios and regression detection.
+### Cypress End-to-End Tests
+The project includes Cypress for end-to-end testing of the full application stack.
+
+**Setup:**
+```bash
+cd frontend
+npm install cypress --save-dev
+```
+
+**Run Cypress:**
+```bash
+# Open Cypress Test Runner (interactive mode)
+cd frontend
+npx cypress open
+
+# Run Cypress tests headlessly
+npx cypress run
+```
+
+**Writing Tests:**
+Cypress tests are located in `frontend/cypress/e2e/`. Tests can interact with the full stack including frontend, backend, and database.
+
+### API Testing with proxymock
+The project includes proxymock integration for recording and replaying API traffic, enabling realistic testing scenarios and regression detection.
 
 ## 🔧 Development
 
@@ -138,40 +88,324 @@ crm-demo/
 │   ├── pkg/              # Application packages
 │   ├── db/migrations/    # Database migrations
 │   └── api/openapi/      # API specifications
-├── frontend/             # React frontend
-│   ├── src/             # Source code
-│   ├── public/          # Static assets
-│   └── build/           # Production build
-└── docs/                # Additional documentation
+└── frontend/             # React frontend
+    ├── src/             # Source code
+    ├── public/          # Static assets
+    └── build/           # Production build
 ```
 
 ## 🏗️ Architecture
 
+This CRM can be run in several configurations, from baseline development to advanced testing scenarios with proxymock.
+
+### System Architecture Overview
+
+The complete system architecture showing all components:
+
 ```mermaid
 graph LR
-    Frontend[Frontend<br/>React App]
-    Backend[Backend<br/>Core Service]
-    DB[(PostgreSQL)]
-    PM[ProxyMock<br/>Record & Replay]
+    Cypress[Cypress Tests] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:8080| CoreService[Go Core Service]
+    CoreService -->|:5432| Postgres[(PostgreSQL)]
+    
+    style Cypress fill:#17b978,stroke:#333,stroke-width:2px
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style CoreService fill:#00add8,stroke:#333,stroke-width:2px
+    style Postgres fill:#336791,stroke:#333,stroke-width:2px
+```
 
-    Frontend -->|HTTP/REST :3000| Backend
-    Backend -->|:8080| DB
+### 1. Baseline Development
 
-    PM -.->|Intercept Inbound| Frontend
-    PM -.->|Intercept Outbound| Backend
+The standard development setup with all services running locally:
 
+```mermaid
+graph LR
+    Browser[Browser] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:8080| Backend[Go Backend]
+    Backend -->|:5432| DB[(PostgreSQL)]
+
+    style Browser fill:#f9f,stroke:#333,stroke-width:2px
     style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
     style Backend fill:#00add8,stroke:#333,stroke-width:2px
     style DB fill:#336791,stroke:#333,stroke-width:2px
-    style PM fill:#ff6b6b,stroke:#333,stroke-width:2px
 ```
 
-### Components
+**How to run:**
 
-- **Frontend**: React single-page application with Material-UI
-- **Backend**: Go REST API service with Gin framework
-- **PostgreSQL**: Database for persistent storage
-- **ProxyMock**: Tool for recording and replaying API traffic for testing
+```bash
+# Step 1: Clone the repository
+git clone https://github.com/kenahrens/crm-demo.git
+cd crm-demo
+
+# Step 2: Set up PostgreSQL database
+make setup-db
+
+# Step 3: Start backend (Terminal 1)
+cd core-service
+make run
+
+# Step 4: Start frontend (Terminal 2)
+cd frontend
+npm install
+make start
+```
+
+**Access the application:**
+- Frontend: http://localhost:3000
+- API: http://localhost:8080/v1/api
+
+**Create your first user:**
+
+There is no default user. Create the first admin user:
+
+1. Temporarily disable auth as directed in `core-service/tests/test.http` (header comments), then restart the service
+2. Create the admin user via API:
+   ```bash
+   curl -X POST http://localhost:8080/v1/api/users \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "username": "admin",
+       "email": "admin@example.com",
+       "password": "adminpassword",
+       "role": "admin"
+     }'
+   ```
+3. Re-enable auth, restart the service, and log in with:
+   - Email: `admin@example.com`
+   - Password: `adminpassword`
+
+### 2. Recording Traffic with proxymock
+
+#### 2a. Recording Frontend → Core Service Traffic
+
+Record traffic between the frontend and core service:
+
+```mermaid
+graph LR
+    Browser[Browser] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:4143| PMRec[proxymock<br/>Recording]
+    PMRec -->|:8080| CoreService[Go Core Service]
+    CoreService -->|:5432| Postgres[(PostgreSQL)]
+
+    PMRec -.->|Save| RRPairs[RRPair Files<br/>Frontend→Backend]
+
+    style Browser fill:#f9f,stroke:#333,stroke-width:2px
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style CoreService fill:#00add8,stroke:#333,stroke-width:2px
+    style Postgres fill:#336791,stroke:#333,stroke-width:2px
+    style PMRec fill:#ff6b6b,stroke:#333,stroke-width:2px
+    style RRPairs fill:#ffd93d,stroke:#333,stroke-width:1px
+```
+
+**How to run:**
+```bash
+# Terminal 1: Start PostgreSQL
+make setup-db
+
+# Terminal 2: Start backend
+cd core-service
+make run
+
+# Terminal 3: Start proxymock recording for frontend→backend traffic
+# In Claude Code, run:
+mcp_proxymock_record_traffic_start({
+  "app-port": "8080",
+  "proxy-in-port": "4143",
+  "out-directory": ["proxymock/recorded-frontend-backend-<timestamp>"]
+})
+
+# Or via CLI:
+proxymock record \
+  --app-port 8080 \
+  --proxy-in-port 4143 \
+  --out proxymock/recorded-frontend-backend-$(date +%Y-%m-%d_%H-%M-%S)
+
+# Terminal 4: Start frontend pointing to proxymock port
+cd frontend
+# Update API_BASE_URL to http://localhost:4143/v1/api
+npm install
+make start
+
+# Now use the application - frontend→backend traffic will be recorded
+# When done, stop recording with:
+mcp_proxymock_record_traffic_stop()
+```
+
+#### 2b. Recording Core Service → PostgreSQL Traffic
+
+Record database traffic from the core service to PostgreSQL:
+
+```mermaid
+graph LR
+    Frontend[React Frontend] -->|:8080| CoreService[Go Core Service]
+    CoreService --> PMRec[proxymock<br/>Recording<br/>via SOCKS Proxy]
+    PMRec -->|:5432| Postgres[(PostgreSQL)]
+
+    PMRec -.->|Save| RRPairs[RRPair Files<br/>Backend→Database]
+
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style CoreService fill:#00add8,stroke:#333,stroke-width:2px
+    style Postgres fill:#336791,stroke:#333,stroke-width:2px
+    style PMRec fill:#ff6b6b,stroke:#333,stroke-width:2px
+    style RRPairs fill:#ffd93d,stroke:#333,stroke-width:1px
+```
+
+**How to run:**
+```bash
+# Terminal 1: Start PostgreSQL
+make setup-db
+
+# Terminal 2: Start proxymock recording for backend→database traffic
+# In Claude Code, run:
+mcp_proxymock_record_traffic_start({
+  "app-port": "5432",
+  "proxy-in-port": "4140",
+  "out-directory": ["proxymock/recorded-backend-db-<timestamp>"]
+})
+
+# Or via CLI:
+proxymock record \
+  --app-port 5432 \
+  --proxy-in-port 4140 \
+  --out proxymock/recorded-backend-db-$(date +%Y-%m-%d_%H-%M-%S)
+
+# Terminal 3: Start backend with proxymock environment variables
+cd core-service
+export http_proxy=socks5h://localhost:4140
+export https_proxy=socks5h://localhost:4140
+export SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+make run
+
+# Terminal 4: Start frontend (optional, for generating traffic)
+cd frontend
+npm install
+make start
+
+# Now use the application - backend→database traffic will be recorded
+# When done, stop recording with:
+mcp_proxymock_record_traffic_stop()
+```
+
+### 3. Replaying with Mock Servers
+
+#### 3a. Cypress Tests → Frontend → Mock Backend
+
+Run Cypress end-to-end tests against the frontend with a mocked backend:
+
+```mermaid
+graph LR
+    Cypress[Cypress Tests] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:8080| PMMock[proxymock<br/>Mock Server]
+
+    RRPairs[RRPair Files] -.->|Load| PMMock
+
+    style Cypress fill:#17b978,stroke:#333,stroke-width:2px
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style PMMock fill:#ff6b6b,stroke:#333,stroke-width:2px
+    style RRPairs fill:#ffd93d,stroke:#333,stroke-width:1px
+```
+
+**How to run:**
+```bash
+# Terminal 1: Start proxymock mock server
+# In Claude Code, run:
+mcp_proxymock_mock_server_start({
+  "in-directory": ["proxymock/recorded-frontend-backend-<timestamp>"]
+})
+
+# Or via CLI:
+proxymock mock \
+  --in proxymock/recorded-frontend-backend-<timestamp> \
+  --port 8080
+
+# Terminal 2: Start frontend
+cd frontend
+# Ensure API_BASE_URL points to http://localhost:8080/v1/api
+npm install
+make start
+
+# Terminal 3: Run Cypress tests
+cd frontend
+npx cypress run
+# Or open interactive mode: npx cypress open
+
+# The mock server will respond with recorded responses
+# Requests that don't match will be logged to out-directory
+# When done, stop mocking with:
+mcp_proxymock_mock_server_stop()
+```
+
+Access at: http://localhost:3000 (backend is mocked)
+
+#### 3b. Backend Tests → Core Service → Mock Database
+
+Run backend integration tests against the core service with a mocked database:
+
+```mermaid
+graph LR
+    Tests[Backend Tests<br/>proxymock Replay] -->|:8080| CoreService[Go Core Service]
+    CoreService --> PMMock[proxymock<br/>Mock Server<br/>Database]
+
+    TestRRPairs[Test RRPairs] -.->|Load| Tests
+    MockRRPairs[Mock RRPairs<br/>Database] -.->|Load| PMMock
+    Tests -.->|Save Results| ResultRRPairs[Result RRPairs]
+
+    style Tests fill:#17b978,stroke:#333,stroke-width:2px
+    style CoreService fill:#00add8,stroke:#333,stroke-width:2px
+    style PMMock fill:#ff6b6b,stroke:#333,stroke-width:2px
+    style TestRRPairs fill:#ffd93d,stroke:#333,stroke-width:1px
+    style MockRRPairs fill:#ffd93d,stroke:#333,stroke-width:1px
+    style ResultRRPairs fill:#6bcf7f,stroke:#333,stroke-width:1px
+```
+
+**How to run:**
+```bash
+# Terminal 1: Start proxymock mock server for database
+# In Claude Code, run:
+mcp_proxymock_mock_server_start({
+  "in-directory": ["proxymock/recorded-backend-db-<timestamp>"]
+})
+
+# Or via CLI:
+proxymock mock \
+  --in proxymock/recorded-backend-db-<timestamp> \
+  --port 4140
+
+# Terminal 2: Start backend with proxied database connection
+cd core-service
+export http_proxy=socks5h://localhost:4140
+export https_proxy=socks5h://localhost:4140
+export SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+make run
+
+# Terminal 3: Replay test traffic against backend
+# In Claude Code, run:
+mcp_proxymock_replay_traffic({
+  "in-directory": ["proxymock/tests"],
+  "test-against": "http://localhost:8080",
+  "out-directory": ["proxymock/replayed-<timestamp>"]
+})
+
+# Or via CLI:
+proxymock replay \
+  --in proxymock/tests \
+  --test-against http://localhost:8080 \
+  --out proxymock/replayed-$(date +%Y-%m-%d_%H-%M-%S)
+
+# Compare results to detect regressions
+# In Claude Code, run:
+mcp_proxymock_compare_rrpair_files({
+  "in": ["proxymock/tests", "proxymock/replayed-<timestamp>"],
+  "verbosity-level": 2
+})
+
+# Or via CLI:
+proxymock compare \
+  --in proxymock/tests \
+  --in proxymock/replayed-<timestamp> \
+  --verbosity 2
+```
+
 
 ### Technology Stack
 
@@ -179,7 +413,7 @@ graph LR
 
 **Frontend**: React 18, Material-UI v5, Axios
 
-**Testing**: ProxyMock for traffic recording/replay
+**Testing**: Cypress for E2E tests, proxymock for traffic recording/replay/mocking
 
 ## 📊 Data Model
 
@@ -216,7 +450,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions, issues, or contributions:
 - Create an issue in the GitHub repository
-- Check existing documentation in `/docs`
 - Review the API specification for integration questions
 
 ---

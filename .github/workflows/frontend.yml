@@ -44,6 +44,10 @@ jobs:
           cd frontend
           npm test -- --watchAll=false --passWithNoTests
       
+      - name: Set up QEMU
+        if: github.event_name != 'pull_request'
+        uses: docker/setup-qemu-action@v2
+      
       - name: Set up Docker Buildx
         if: github.event_name != 'pull_request'
         uses: docker/setup-buildx-action@v2
@@ -63,5 +67,6 @@ jobs:
           context: ./frontend
           push: true
           tags: ghcr.io/kenahrens/crm-demo/frontend:latest
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max 

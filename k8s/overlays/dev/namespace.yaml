@@ -4,4 +4,5 @@ metadata:
   name: crm-dev
   labels:
     name: crm-dev
-    environment: development 
+    environment: development
+
