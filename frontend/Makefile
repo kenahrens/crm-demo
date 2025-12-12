@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help install start build test lint
+.PHONY: help install start build test lint docker-test
 
 # VERSION can be passed from parent Makefile, or read from root VERSION file
 VERSION ?= $(shell cat ../VERSION 2>/dev/null || cat VERSION 2>/dev/null || echo "latest")
@@ -37,6 +37,37 @@ docker-push: ## Push Docker image to GitHub Container Registry
 	docker push $(DOCKER_IMAGE)
 	@if [ "$(VERSION)" != "latest" ]; then \
 		docker push $(DOCKER_IMAGE_LATEST); \
+	fi
+
+docker-test: docker-build ## Test Docker container
+	@echo "Testing frontend container..."
+	@echo "Cleaning up any existing containers on port 8081..."; \
+	docker ps -a --filter "publish=8081" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f >/dev/null 2>&1 || true; \
+	CONTAINER_ID=$$(docker run -d -p 8081:80 $(DOCKER_IMAGE) 2>&1); \
+	if [ $$? -ne 0 ] || [ -z "$$CONTAINER_ID" ] || echo "$$CONTAINER_ID" | grep -q "Error"; then \
+		echo "❌ Failed to start container: $$CONTAINER_ID"; \
+		exit 1; \
+	fi; \
+	echo "Started container: $$CONTAINER_ID"; \
+	echo "Waiting for container to start..."; \
+	sleep 5; \
+	if ! docker ps --format "{{.ID}}" | grep -q "$${CONTAINER_ID:0:12}"; then \
+		echo "❌ Frontend container failed to start or exited"; \
+		docker logs $$CONTAINER_ID 2>&1 || true; \
+		docker rm -f $$CONTAINER_ID >/dev/null 2>&1 || true; \
+		exit 1; \
+	fi; \
+	echo "✅ Frontend container started successfully"; \
+	HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081 2>/dev/null || echo "000"); \
+	docker stop $$CONTAINER_ID >/dev/null 2>&1; \
+	sleep 1; \
+	docker rm $$CONTAINER_ID >/dev/null 2>&1 || docker rm -f $$CONTAINER_ID >/dev/null 2>&1 || true; \
+	if [ "$$HTTP_CODE" = "200" ] || [ "$$HTTP_CODE" = "304" ]; then \
+		echo "✅ Frontend container is serving content (HTTP $$HTTP_CODE)"; \
+		exit 0; \
+	else \
+		echo "⚠️ Frontend container running but HTTP status is $$HTTP_CODE"; \
+		exit 1; \
 	fi
 
 clean: ## Clean build artifacts
