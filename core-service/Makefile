@@ -2,7 +2,10 @@
 
 # Variables
 APP_NAME = core-service
-DOCKER_IMAGE = ghcr.io/kenahrens/crm-demo/core-service:latest
+# VERSION can be passed from parent Makefile, or read from root VERSION file
+VERSION ?= $(shell cat ../VERSION 2>/dev/null || cat VERSION 2>/dev/null || echo "latest")
+DOCKER_IMAGE = ghcr.io/kenahrens/crm-demo/core-service:$(VERSION)
+DOCKER_IMAGE_LATEST = ghcr.io/kenahrens/crm-demo/core-service:latest
 
 # Define proxymock environment variables
 PROXYMOCK_ENV = http_proxy=socks5h://localhost:4140 \
@@ -50,7 +53,12 @@ proxymock-mock:
 
 # Build Docker image
 docker-build:
+	@echo "Building $(DOCKER_IMAGE) (version: $(VERSION))"
 	docker build -t $(DOCKER_IMAGE) .
+	@if [ "$(VERSION)" != "latest" ]; then \
+		docker tag $(DOCKER_IMAGE) $(DOCKER_IMAGE_LATEST); \
+		echo "Also tagged as $(DOCKER_IMAGE_LATEST)"; \
+	fi
 
 # Run Docker container
 docker-run:

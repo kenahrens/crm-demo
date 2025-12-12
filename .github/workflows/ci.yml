@@ -1,0 +1,393 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ env.REGISTRY }}/kenahrens/crm-demo/core-service
+  FRONTEND_IMAGE: ${{ env.REGISTRY }}/kenahrens/crm-demo/frontend
+
+jobs:
+  # Step 1: Build Code
+  build-backend:
+    name: Build Backend Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('core-service/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build backend
+        working-directory: core-service
+        run: make build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-service-binary
+          path: core-service/core-service
+          retention-days: 1
+
+  build-frontend:
+    name: Build Frontend Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+          retention-days: 1
+
+  # Step 2: Test
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('core-service/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run backend tests
+        working-directory: core-service
+        run: make test
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test -- --ci --coverage --watchAll=false
+
+  # Step 3: Build Container
+  build-backend-container:
+    name: Build Backend Container
+    runs-on: ubuntu-latest
+    needs: [build-backend, test-backend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend container
+        uses: docker/build-push-action@v5
+        with:
+          context: core-service
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend-container:
+    name: Build Frontend Container
+    runs-on: ubuntu-latest
+    needs: [build-frontend, test-frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push frontend container
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Step 4: Test Container
+  test-backend-container:
+    name: Test Backend Container
+    runs-on: ubuntu-latest
+    needs: [build-backend-container]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: core
+          POSTGRES_PASSWORD: core
+          POSTGRES_DB: crm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Pull or build backend container
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Building backend container locally for PR..."
+            docker build -t ${{ env.BACKEND_IMAGE }}:test core-service
+            CONTAINER_TAG="${{ env.BACKEND_IMAGE }}:test"
+          else
+            echo "Pulling backend container from registry..."
+            docker pull ${{ steps.meta.outputs.tags }}
+            CONTAINER_TAG="${{ steps.meta.outputs.tags }}"
+          fi
+          echo "CONTAINER_TAG=$CONTAINER_TAG" >> $GITHUB_ENV
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U core; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+
+      - name: Test backend container
+        run: |
+          # Start container in background with database connection
+          CONTAINER_ID=$(docker run -d \
+            -e DB_HOST=host.docker.internal \
+            -e DB_PORT=5432 \
+            -e DB_USER=core \
+            -e DB_PASSWORD=core \
+            -e DB_NAME=crm \
+            --add-host=host.docker.internal:host-gateway \
+            -p 8080:8080 \
+            ${{ env.CONTAINER_TAG }})
+          
+          echo "Started container: $CONTAINER_ID"
+          
+          # Wait for container to start and be ready
+          echo "Waiting for backend service to start..."
+          for i in {1..30}; do
+            if docker ps | grep -q $CONTAINER_ID; then
+              # Check if health endpoint responds
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/v1/api/health || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ Backend container is healthy (HTTP $HTTP_CODE)"
+                curl -s http://localhost:8080/v1/api/health | jq . || curl -s http://localhost:8080/v1/api/health
+                break
+              else
+                echo "Waiting for health endpoint... (attempt $i/30, HTTP $HTTP_CODE)"
+                sleep 2
+              fi
+            else
+              echo "❌ Backend container stopped unexpectedly"
+              docker logs $CONTAINER_ID
+              exit 1
+            fi
+          done
+          
+          # Final check
+          if ! docker ps | grep -q $CONTAINER_ID; then
+            echo "❌ Backend container failed to start or crashed"
+            docker logs $CONTAINER_ID
+            exit 1
+          fi
+          
+          # Cleanup
+          docker stop $CONTAINER_ID || true
+          docker rm $CONTAINER_ID || true
+
+  test-frontend-container:
+    name: Test Frontend Container
+    runs-on: ubuntu-latest
+    needs: [build-frontend-container]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Pull or build frontend container
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Building frontend container locally for PR..."
+            docker build -t ${{ env.FRONTEND_IMAGE }}:test frontend
+            CONTAINER_TAG="${{ env.FRONTEND_IMAGE }}:test"
+          else
+            echo "Pulling frontend container from registry..."
+            docker pull ${{ steps.meta.outputs.tags }}
+            CONTAINER_TAG="${{ steps.meta.outputs.tags }}"
+          fi
+          echo "CONTAINER_TAG=$CONTAINER_TAG" >> $GITHUB_ENV
+
+      - name: Test frontend container
+        run: |
+          # Start container in background
+          CONTAINER_ID=$(docker run -d -p 8081:80 ${{ env.CONTAINER_TAG }})
+          
+          # Wait for container to start
+          sleep 5
+          
+          # Check if container is running
+          if docker ps | grep -q $CONTAINER_ID; then
+            echo "✅ Frontend container started successfully"
+            # Test if nginx is serving content
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081 || echo "000")
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "304" ]; then
+              echo "✅ Frontend container is serving content (HTTP $HTTP_CODE)"
+            else
+              echo "⚠️ Frontend container running but HTTP status is $HTTP_CODE"
+            fi
+          else
+            echo "❌ Frontend container failed to start"
+            docker logs $CONTAINER_ID
+            exit 1
+          fi
+          
+          # Cleanup
+          docker stop $CONTAINER_ID || true
+          docker rm $CONTAINER_ID || true
+
