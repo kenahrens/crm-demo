@@ -25,6 +25,13 @@ const mockStore = configureStore({
       ],
       loading: false,
       error: null
+    }),
+    accounts: () => ({
+      accounts: [
+        { id: '1', name: 'Test Account', industry: 'Technology', type: 'Customer' }
+      ],
+      loading: false,
+      error: null
     })
   }
 });
