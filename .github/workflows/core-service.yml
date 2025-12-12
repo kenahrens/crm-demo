@@ -14,6 +14,7 @@ on:
 
 jobs:
   build:
+    if: false  # Disabled - using unified CI workflow (ci.yml)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -62,8 +63,8 @@ jobs:
           retention-days: 5
 
   docker:
+    if: false  # Disabled - using unified CI workflow (ci.yml)
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
