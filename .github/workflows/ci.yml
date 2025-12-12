@@ -248,18 +248,11 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Pull or build backend container
+      - name: Build backend container for testing
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Building backend container locally for PR..."
-            docker build -t ${{ env.BACKEND_IMAGE }}:test core-service
-            CONTAINER_TAG="${{ env.BACKEND_IMAGE }}:test"
-          else
-            echo "Pulling backend container from registry..."
-            docker pull ${{ steps.meta.outputs.tags }}
-            CONTAINER_TAG="${{ steps.meta.outputs.tags }}"
-          fi
-          echo "CONTAINER_TAG=$CONTAINER_TAG" >> $GITHUB_ENV
+          echo "Building backend container locally for testing..."
+          docker build -t ${{ env.BACKEND_IMAGE }}:test core-service
+          echo "CONTAINER_TAG=${{ env.BACKEND_IMAGE }}:test" >> $GITHUB_ENV
 
       - name: Install PostgreSQL client
         run: |
@@ -350,18 +343,11 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Pull or build frontend container
+      - name: Build frontend container for testing
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Building frontend container locally for PR..."
-            docker build -t ${{ env.FRONTEND_IMAGE }}:test frontend
-            CONTAINER_TAG="${{ env.FRONTEND_IMAGE }}:test"
-          else
-            echo "Pulling frontend container from registry..."
-            docker pull ${{ steps.meta.outputs.tags }}
-            CONTAINER_TAG="${{ steps.meta.outputs.tags }}"
-          fi
-          echo "CONTAINER_TAG=$CONTAINER_TAG" >> $GITHUB_ENV
+          echo "Building frontend container locally for testing..."
+          docker build -t ${{ env.FRONTEND_IMAGE }}:test frontend
+          echo "CONTAINER_TAG=${{ env.FRONTEND_IMAGE }}:test" >> $GITHUB_ENV
 
       - name: Test frontend container
         run: |
