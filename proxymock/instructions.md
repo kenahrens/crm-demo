@@ -255,27 +255,27 @@ graph LR
 1. **Terminal 1: Start proxymock Recording for Database**:
 
    **Using Claude Code (recommended)**:
-   > "Start proxymock recording mapping port 15432 to tcp://localhost:5432 for database traffic, saving to proxymock/recorded-database-<timestamp>"
+   > "Start proxymock recording with proxy-in-port 18080 with app-port 8080 and mapping port 15432 to tcp://localhost:5432 for database traffic, saving to proxymock/recorded-database-<timestamp>"
 
    **Or via CLI**:
    ```bash
    proxymock record \
+     --app-port 8080 \
+     --proxy-in-port 18080 \
      --map 15432=tcp://localhost:5432 \
      --out proxymock/recorded-database-$(date +%Y-%m-%d_%H-%M-%S)
    ```
 
-2. **Terminal 2: Start proxymock Recording for Inbound Traffic** (this will also start the core service):
+2. **Terminal 2: Start core service** (this will also start the core service):
 
    **Using Claude Code (recommended)**:
-   > "Start proxymock recording on proxy-in-port 18080 with app-port 8080 and DB_PORT=15432, saving to proxymock/recorded-database-<timestamp>"
+   > "Start core-service with DB_PORT set to 15432"
 
    **Or via CLI**:
    ```bash
-   # proxymock will automatically START the core service with DB_PORT=15432
-   DB_PORT=15432 proxymock record \
-     --app-port 8080 \
-     --proxy-in-port 18080 \
-     --out proxymock/recorded-database-$(same-timestamp-as-step-1)
+   cd core-service
+   export DB_PORT=15432
+   go run cmd/main.go
    ```
 
    **Note**: The `--app-port 8080` flag tells proxymock to automatically start the core service on port 8080. You don't need to start the core service separately. The `DB_PORT=15432` environment variable ensures the core service connects to the proxymock database instance on port 15432.
@@ -341,7 +341,7 @@ graph LR
 # Terminal 1: Start proxymock mock for database
 proxymock mock \
   --in proxymock/recorded-database-<timestamp> \
-  --map 15432=tcp://localhost:5432 \
+  --map 15432=postgres://localhost:5432 \
   --out proxymock/results/mocked-database-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 2: Start core service with database pointing to proxymock
