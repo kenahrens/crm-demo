@@ -10,14 +10,14 @@ import (
 type Account struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
-	Industry  string    `json:"industry,omitempty"`
-	Website   string    `json:"website,omitempty"`
-	Phone     string    `json:"phone,omitempty"`
-	Address   string    `json:"address,omitempty"`
-	City      string    `json:"city,omitempty"`
-	State     string    `json:"state,omitempty"`
-	Zip       string    `json:"zip,omitempty"`
-	Country   string    `json:"country,omitempty"`
+	Industry  *string   `json:"industry,omitempty"`
+	Website   *string   `json:"website,omitempty"`
+	Phone     *string   `json:"phone,omitempty"`
+	Address   *string   `json:"address,omitempty"`
+	City      *string   `json:"city,omitempty"`
+	State     *string   `json:"state,omitempty"`
+	Zip       *string   `json:"zip,omitempty"`
+	Country   *string   `json:"country,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedBy uuid.UUID `json:"created_by"`

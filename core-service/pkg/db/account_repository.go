@@ -21,15 +21,20 @@ func NewAccountRepository(db *DB) *AccountRepository {
 // GetAllAccounts retrieves all accounts from the database
 func (r *AccountRepository) GetAllAccounts() ([]models.Account, error) {
 	query := `SELECT id, name, industry, website, phone, address, city, state, zip, country, created_at, updated_at, created_by FROM accounts ORDER BY name`
+	fmt.Printf("[DEBUG] GetAllAccounts: executing query: %s\n", query)
 	rows, err := r.db.Query(query)
 	if err != nil {
+		fmt.Printf("[ERROR] GetAllAccounts: query failed: %v\n", err)
 		return nil, fmt.Errorf("error querying accounts: %w", err)
 	}
 	defer rows.Close()
 
 	var accounts []models.Account
+	rowNum := 0
 	for rows.Next() {
+		rowNum++
 		var account models.Account
+		fmt.Printf("[DEBUG] GetAllAccounts: scanning row %d\n", rowNum)
 		if err := rows.Scan(
 			&account.ID,
 			&account.Name,
@@ -45,21 +50,41 @@ func (r *AccountRepository) GetAllAccounts() ([]models.Account, error) {
 			&account.UpdatedAt,
 			&account.CreatedBy,
 		); err != nil {
-			return nil, fmt.Errorf("error scanning account row: %w", err)
+			fmt.Printf("[ERROR] GetAllAccounts: scan failed on row %d: %v\n", rowNum, err)
+			industryVal := "<nil>"
+			if account.Industry != nil {
+				industryVal = *account.Industry
+			}
+			websiteVal := "<nil>"
+			if account.Website != nil {
+				websiteVal = *account.Website
+			}
+			fmt.Printf("[ERROR] GetAllAccounts: account data so far - ID: %v, Name: %s, Industry: %s, Website: %s\n",
+				account.ID, account.Name, industryVal, websiteVal)
+			return nil, fmt.Errorf("error scanning account row %d: %w", rowNum, err)
 		}
+		phoneVal := "<nil>"
+		if account.Phone != nil {
+			phoneVal = *account.Phone
+		}
+		fmt.Printf("[DEBUG] GetAllAccounts: successfully scanned row %d - Name: %s, Phone: %s\n",
+			rowNum, account.Name, phoneVal)
 		accounts = append(accounts, account)
 	}
 
 	if err := rows.Err(); err != nil {
+		fmt.Printf("[ERROR] GetAllAccounts: rows.Err() returned: %v\n", err)
 		return nil, fmt.Errorf("error iterating account rows: %w", err)
 	}
 
+	fmt.Printf("[DEBUG] GetAllAccounts: successfully retrieved %d accounts\n", len(accounts))
 	return accounts, nil
 }
 
 // GetAccountByID retrieves a single account by ID
 func (r *AccountRepository) GetAccountByID(id uuid.UUID) (*models.Account, error) {
 	query := `SELECT id, name, industry, website, phone, address, city, state, zip, country, created_at, updated_at, created_by FROM accounts WHERE id = $1`
+	fmt.Printf("[DEBUG] GetAccountByID: querying account %s\n", id.String())
 	var account models.Account
 	err := r.db.QueryRow(query, id).Scan(
 		&account.ID,
@@ -78,10 +103,28 @@ func (r *AccountRepository) GetAccountByID(id uuid.UUID) (*models.Account, error
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			fmt.Printf("[DEBUG] GetAccountByID: no account found with ID %s\n", id.String())
 			return nil, nil // No account found
 		}
+		fmt.Printf("[ERROR] GetAccountByID: scan failed for account %s: %v\n", id.String(), err)
+		industryVal := "<nil>"
+		if account.Industry != nil {
+			industryVal = *account.Industry
+		}
+		websiteVal := "<nil>"
+		if account.Website != nil {
+			websiteVal = *account.Website
+		}
+		fmt.Printf("[ERROR] GetAccountByID: partial data - ID: %v, Name: %s, Industry: %s, Website: %s\n",
+			account.ID, account.Name, industryVal, websiteVal)
 		return nil, fmt.Errorf("error querying account by ID: %w", err)
 	}
+	phoneVal := "<nil>"
+	if account.Phone != nil {
+		phoneVal = *account.Phone
+	}
+	fmt.Printf("[DEBUG] GetAccountByID: successfully retrieved account %s - Name: %s, Phone: %s\n",
+		id.String(), account.Name, phoneVal)
 
 	// Get associated contacts
 	contactsQuery := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at 
