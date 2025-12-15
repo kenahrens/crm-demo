@@ -40,12 +40,12 @@ The three traffic capture scenarios serve different purposes:
 ```mermaid
 graph LR
     Browser[Browser] -->|:3000| Frontend[React Frontend]
-    Frontend -->|:4143| PMRec[proxymock Recording<br/>Port 4143]
-    PMRec -->|:8080| CoreService[Go Core Service]
+    Frontend -->|:18080| PMRec[proxymock Recording<br/>Port 18080]
+    PMRec -->|maps to :8080| CoreService[Go Core Service]
     CoreService -->|:5432| Postgres[(PostgreSQL)]
-    
+
     PMRec -.->|Save RRPairs| MockFiles[proxymock/recorded-frontend-backend/]
-    
+
     style Frontend fill:#61dafb
     style PMRec fill:#ff6b6b
     style CoreService fill:#00add8
@@ -66,26 +66,26 @@ graph LR
    ```
 
 2. **Start proxymock Recording**:
-   - proxymock listens on port 4143 (proxy-in-port)
-   - proxymock forwards to port 8080 (app-port where core-service runs)
-   
+   - proxymock listens on port 18080 and maps to port 8080 (where core-service runs)
+   - Uses --map flag to create the port mapping
+
    **Using Claude Code (recommended)**:
    In Claude Code, you can ask:
-   > "Start proxymock recording for frontend→backend traffic. Listen on port 4143, forward to port 8080, and save recordings to proxymock/recorded-frontend-backend-<timestamp>"
-   
+   > "Start proxymock recording for frontend→backend traffic. Map port 18080 to http://localhost:8080 and save recordings to proxymock/recorded-frontend-backend-<timestamp>"
+
    Claude will automatically execute the proxymock recording with the correct parameters.
-   
+
    **Or via CLI**:
    ```bash
    proxymock record \
-     --app-port 8080 \
-     --proxy-in-port 4143 \
+     --map 18080=http://localhost:8080 \
      --out proxymock/recorded-frontend-backend-$(date +%Y-%m-%d_%H-%M-%S)
    ```
 
-3. **Configure Frontend to Use Proxy**:
-   - Update `frontend/vite.config.mjs` to proxy `/v1/api` to `http://localhost:4143` instead of `http://localhost:8080`
-   - Or set environment variable to override API base URL
+3. **Configure Frontend to Use Proxymock Port**:
+   - Set `VITE_API_PORT` environment variable to `18080` to use proxymock recording
+   - Or update `frontend/vite.config.mjs` to proxy `/v1/api` to `http://localhost:18080` instead of `http://localhost:8080`
+   - The environment variable approach makes it easy to swap between live (8080) and proxymock (18080) ports
 
 4. **Start Frontend and Generate Traffic**:
    ```bash
@@ -107,11 +107,14 @@ Once you have recorded traffic, you can use it to mock the backend:
    ```bash
    proxymock mock \
      --in proxymock/recorded-frontend-backend-<timestamp> \
-     --port 8080
+     --map 18080=http://localhost:8080
    ```
 
+   Note: The mock server listens on port 18080. You can optionally use `--map 8080=http://localhost:8080` if you want the mock server to listen on the same port as the real backend.
+
 2. **Start Frontend**:
-   - Ensure `frontend/vite.config.mjs` points to `http://localhost:8080` (or the mock server port)
+   - Set `VITE_API_PORT=18080` to use the mock server port
+   - Or ensure `frontend/vite.config.mjs` points to `http://localhost:18080`
    - Start the frontend: `cd frontend && make start`
 
 3. **Run Tests**:
@@ -127,12 +130,12 @@ Once you have recorded traffic, you can use it to mock the backend:
 ```mermaid
 graph LR
     Browser[Browser] -->|:3000| Frontend[React Frontend]
-    Frontend -->|:4143| PMRec[proxymock Recording<br/>Port 4143]
-    PMRec -->|:8080| CoreService[Go Core Service]
+    Frontend -->|:18080| PMRec[proxymock Recording<br/>Port 18080]
+    PMRec -->|maps to :8080| CoreService[Go Core Service]
     CoreService -->|:5432| Postgres[(PostgreSQL)]
-    
+
     PMRec -.->|Save RRPairs| TestFiles[proxymock/tests/]
-    
+
     style Frontend fill:#61dafb
     style PMRec fill:#ff6b6b
     style CoreService fill:#00add8
@@ -147,13 +150,12 @@ graph LR
 
    **Using Claude Code**:
    In Claude Code, you can ask:
-   > "Start proxymock recording for frontend→backend traffic. Listen on port 4143, forward to port 8080, and save recordings to proxymock/tests"
-   
+   > "Start proxymock recording for frontend→backend traffic. Map port 18080 to http://localhost:8080 and save recordings to proxymock/tests"
+
    **Or via CLI**:
    ```bash
    proxymock record \
-     --app-port 8080 \
-     --proxy-in-port 4143 \
+     --map 18080=http://localhost:8080 \
      --out proxymock/tests
    ```
 
@@ -186,11 +188,11 @@ graph LR
 ```mermaid
 graph LR
     Frontend[React Frontend] -->|:8080| CoreService[Go Core Service]
-    CoreService -->|SOCKS Proxy| PMRec[proxymock Recording<br/>SOCKS :4140]
-    PMRec -->|:5432| Postgres[(PostgreSQL)]
-    
+    CoreService -->|:15432| PMRec[proxymock Recording<br/>Port 15432]
+    PMRec -->|maps to :5432| Postgres[(PostgreSQL)]
+
     PMRec -.->|Save RRPairs| DBMockFiles[proxymock/recorded-backend-db/]
-    
+
     style Frontend fill:#61dafb
     style CoreService fill:#00add8
     style PMRec fill:#ff6b6b
@@ -206,31 +208,29 @@ graph LR
    ```
 
 2. **Start proxymock Recording for Database**:
-   - proxymock listens on port 4140 (proxy-in-port) as SOCKS proxy
-   - proxymock forwards to port 5432 (app-port where PostgreSQL runs)
-   
+   - proxymock listens on port 15432 and maps to port 5432 (where PostgreSQL runs)
+   - Uses --map flag to create the port mapping
+
    **Using Claude Code**:
    In Claude Code, you can ask:
-   > "Start proxymock recording for backend→database traffic. Listen on port 4140 as SOCKS proxy, forward to port 5432, and save recordings to proxymock/recorded-backend-db-<timestamp>"
-   
+   > "Start proxymock recording for backend→database traffic. Map port 15432 to http://localhost:5432 and save recordings to proxymock/recorded-backend-db-<timestamp>"
+
    **Or via CLI**:
    ```bash
    proxymock record \
-     --app-port 5432 \
-     --proxy-in-port 4140 \
+     --map 15432=http://localhost:5432 \
      --out proxymock/recorded-backend-db-$(date +%Y-%m-%d_%H-%M-%S)
    ```
 
-3. **Start Core Service with SOCKS Proxy Environment Variables**:
+3. **Start Core Service with Database Connection to Proxymock Port**:
    ```bash
    cd core-service
-   export http_proxy=socks5h://localhost:4140
-   export https_proxy=socks5h://localhost:4140
-   export SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+   # Configure database connection to use port 15432 instead of 5432
+   export DB_PORT=15432
    make run
    ```
-   
-   **Note**: PostgreSQL connections in Go typically use `lib/pq` or `pgx` which may need special configuration to use SOCKS proxy. You may need to configure connection pooling or use a proxy-aware driver. Consider using `golang.org/x/net/proxy` for SOCKS support.
+
+   **Note**: Update your database connection configuration to use the proxymock port (15432) instead of the live PostgreSQL port (5432). The connection string should point to `localhost:15432`.
 
 4. **Generate Traffic**:
    - Start frontend or use API directly
@@ -247,15 +247,13 @@ graph LR
    ```bash
    proxymock mock \
      --in proxymock/recorded-backend-db-<timestamp> \
-     --port 4140
+     --map 15432=http://localhost:5432
    ```
 
 2. **Start Backend with Proxied Database Connection**:
    ```bash
    cd core-service
-   export http_proxy=socks5h://localhost:4140
-   export https_proxy=socks5h://localhost:4140
-   export SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+   export DB_PORT=15432
    make run
    ```
 
@@ -285,8 +283,8 @@ graph LR
 **How to run:**
 
 **Using Claude Code**:
-1. Ask Claude: "Start a proxymock mock server using recordings from proxymock/recorded-frontend-backend-<timestamp> on port 8080"
-2. Start frontend: `cd frontend && make start`
+1. Ask Claude: "Start a proxymock mock server using recordings from proxymock/recorded-frontend-backend-<timestamp> mapping port 18080 to http://localhost:8080"
+2. Start frontend with `VITE_API_PORT=18080`: `cd frontend && VITE_API_PORT=18080 make start`
 3. Run Cypress tests: `cd frontend && npx cypress run` (or `npx cypress open` for interactive mode)
 
 **Or via CLI**:
@@ -294,11 +292,12 @@ graph LR
 # Terminal 1: Start proxymock mock server
 proxymock mock \
   --in proxymock/recorded-frontend-backend-<timestamp> \
-  --port 8080
+  --map 18080=http://localhost:8080
 
 # Terminal 2: Start frontend
 cd frontend
-# Ensure API_BASE_URL points to http://localhost:8080/v1/api
+# Set environment variable to use proxymock port
+export VITE_API_PORT=18080
 npm install
 make start
 
@@ -334,7 +333,7 @@ graph LR
 **How to run:**
 
 **Using Claude Code**:
-1. Ask Claude: "Start a proxymock mock server for database using recordings from proxymock/recorded-backend-db-<timestamp> on port 4140"
+1. Ask Claude: "Start a proxymock mock server for database using recordings from proxymock/recorded-backend-db-<timestamp> mapping port 15432 to http://localhost:5432"
 2. Start backend with proxied database connection (see CLI commands below)
 3. Ask Claude: "Replay test traffic from proxymock/tests against http://localhost:8080 and save results to proxymock/replayed-<timestamp>"
 4. Ask Claude: "Compare the test traffic in proxymock/tests with the replayed results in proxymock/replayed-<timestamp>"
@@ -344,13 +343,11 @@ graph LR
 # Terminal 1: Start proxymock mock server for database
 proxymock mock \
   --in proxymock/recorded-backend-db-<timestamp> \
-  --port 4140
+  --map 15432=http://localhost:5432
 
 # Terminal 2: Start backend with proxied database connection
 cd core-service
-export http_proxy=socks5h://localhost:4140
-export https_proxy=socks5h://localhost:4140
-export SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+export DB_PORT=15432
 make run
 
 # Terminal 3: Replay test traffic against backend
@@ -370,10 +367,10 @@ proxymock compare \
 
 ### Port Assignments
 
-- **4143**: proxymock proxy for frontend→backend traffic (Scenarios 1 & 2)
-- **4140**: proxymock SOCKS proxy for backend→database traffic (Scenario 3)
-- **8080**: Core service API port
-- **5432**: PostgreSQL port
+- **8080**: Core service API port (live backend)
+- **18080**: proxymock port for frontend→backend traffic (Scenarios 1 & 2)
+- **5432**: PostgreSQL port (live database)
+- **15432**: proxymock port for backend→database traffic (Scenario 3)
 - **3000**: Frontend dev server port
 
 ### Directory Structure
@@ -390,63 +387,65 @@ proxymock/
 
 #### Frontend Configuration (`frontend/vite.config.mjs`)
 
-When recording frontend→backend traffic, update the proxy target:
+Use environment variable to easily switch between live and proxymock ports:
 
 ```javascript
-// Normal development
-proxy: {
-  '/v1/api': {
-    target: 'http://localhost:8080',
-    changeOrigin: true,
+export default defineConfig({
+  server: {
+    proxy: {
+      '/v1/api': {
+        target: `http://localhost:${process.env.VITE_API_PORT || 8080}`,
+        changeOrigin: true,
+      }
+    }
   }
-}
-
-// When recording with proxymock
-proxy: {
-  '/v1/api': {
-    target: 'http://localhost:4143',  // proxymock port
-    changeOrigin: true,
-  }
-}
+})
 ```
+
+Usage:
+- **Live backend**: `make start` (uses port 8080 by default)
+- **Proxymock backend**: `VITE_API_PORT=18080 make start` (uses port 18080)
 
 #### Backend Configuration (`core-service/Makefile`)
 
-The Makefile already includes `PROXYMOCK_ENV` variables for Scenario 3:
+For Scenario 3 (database mocking), configure the database port via environment variable:
 
-```makefile
-PROXYMOCK_ENV = http_proxy=socks5h://localhost:4140 \
-                https_proxy=socks5h://localhost:4140 \
-                SSL_CERT_FILE=~/.speedscale/certs/tls.crt
+```bash
+# Use live database (default)
+make run
+
+# Use proxymock database
+DB_PORT=15432 make run
 ```
 
-Use these when starting the backend with proxied database connections.
+The backend should be configured to read `DB_PORT` from the environment and default to 5432 if not set.
 
 ## Troubleshooting
 
-### PostgreSQL Proxy Support
+### Database Connection Configuration
 
-Go database drivers (`lib/pq`, `pgx`) may not automatically use SOCKS proxy. You may need to:
+To use proxymock with the database, update your database connection string to use port 15432:
 
-- Configure connection pooling with proxy support
-- Use a proxy-aware driver
-- Consider using `golang.org/x/net/proxy` for SOCKS support
-- Modify database connection strings to route through the proxy
+- Configure the backend to read `DB_PORT` from environment variables
+- Set `DB_PORT=15432` when running with proxymock database mocking
+- Ensure the connection string uses `localhost:15432` instead of `localhost:5432`
 
 ### Frontend Proxy Configuration
 
 If the frontend isn't routing through proxymock:
 
-- Verify `vite.config.mjs` proxy target points to the correct proxymock port (4143)
+- Verify `VITE_API_PORT` environment variable is set to `18080`
+- Or verify `vite.config.mjs` proxy target points to the correct proxymock port (18080)
 - Check that proxymock is running on the expected port
 - Ensure the frontend dev server is restarted after configuration changes
 
-### Certificate Requirements
+### Port Conflicts
 
-SOCKS proxy for database connections may require SSL certificates:
+If you encounter port conflicts:
 
-- Set `SSL_CERT_FILE` environment variable: `export SSL_CERT_FILE=~/.speedscale/certs/tls.crt`
-- Ensure certificates are valid and accessible
+- Ensure the live service isn't running on the proxymock port
+- Check that no other processes are using ports 18080 or 15432
+- Use `lsof -i :18080` or `lsof -i :15432` to identify processes using these ports
 
 ### Traffic Separation
 
