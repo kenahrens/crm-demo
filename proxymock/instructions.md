@@ -28,8 +28,7 @@ Both methods achieve the same result - choose the one that's most convenient for
 The three traffic capture scenarios serve different purposes:
 
 1. **Frontend → Core Service (Outbound)**: Capture frontend API calls to create backend mocks for frontend testing
-2. **Frontend → Core Service (Inbound)**: Capture requests to core-service to create test cases for backend testing  
-3. **Core Service → PostgreSQL (Outbound)**: Capture database queries to create database mocks for backend testing
+2. **Core Service → PostgreSQL (Outbound)**: Capture database queries to create database mocks for backend testing
 
 ## Scenario 1: Frontend → Core Service (Outbound) - For Service Mocks
 
@@ -121,65 +120,7 @@ Once you have recorded traffic, you can use it to mock the backend:
    - The frontend can now run against mocked backend responses
    - All API calls will return recorded responses from the RRPair files
 
-## Scenario 2: Frontend → Core Service (Inbound) - For Test Cases
-
-**Purpose**: Record requests coming INTO core-service to create test cases for backend integration testing.
-
-### Architecture
-
-```mermaid
-graph LR
-    Browser[Browser] -->|:3000| Frontend[React Frontend]
-    Frontend -->|:18080| PMRec[proxymock Recording<br/>Port 18080]
-    PMRec -->|maps to :8080| CoreService[Go Core Service]
-    CoreService -->|:5432| Postgres[(PostgreSQL)]
-
-    PMRec -.->|Save RRPairs| TestFiles[proxymock/tests/]
-
-    style Frontend fill:#61dafb
-    style PMRec fill:#ff6b6b
-    style CoreService fill:#00add8
-    style Postgres fill:#336791
-    style TestFiles fill:#6bcf7f
-```
-
-### Setup Steps
-
-1. **Same setup as Scenario 1** - proxymock records the same traffic
-2. **Key Difference**: Save recordings to `proxymock/tests/` directory instead of `proxymock/recorded-frontend-backend-*/`
-
-   **Using Claude Code**:
-   In Claude Code, you can ask:
-   > "Start proxymock recording for frontend→backend traffic. Map port 18080 to http://localhost:8080 and save recordings to proxymock/tests"
-
-   **Or via CLI**:
-   ```bash
-   proxymock record \
-     --map 18080=http://localhost:8080 \
-     --out proxymock/tests
-   ```
-
-### Using Recorded Traffic for Testing
-
-1. **Replay Test Traffic Against Backend**:
-   ```bash
-   proxymock replay \
-     --in proxymock/tests \
-     --test-against http://localhost:8080 \
-     --out proxymock/replayed-$(date +%Y-%m-%d_%H-%M-%S)
-   ```
-
-2. **Compare Results to Detect Regressions**:
-   ```bash
-   proxymock compare \
-     --in proxymock/tests \
-     --in proxymock/replayed-<timestamp> \
-     --verbosity 2
-   ```
-
-**Note**: The recording setup is identical to Scenario 1, but the purpose and output directory differ. The same RRPair files can serve both purposes - you can use them for mocking (Scenario 1) or for test cases (Scenario 2).
-
-## Scenario 3: Core Service → PostgreSQL (Outbound) - For Database Mocks
+## Scenario 2: Core Service → PostgreSQL (Outbound) - For Database Mocks
 
 **Purpose**: Record database queries from core-service so they can be mocked, allowing backend testing without a real database.
 
