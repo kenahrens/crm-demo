@@ -22,6 +22,20 @@ This documentation provides two ways to use proxymock:
 
 Both methods achieve the same result - choose the one that's most convenient for your workflow.
 
+## Application
+
+```mermaid
+graph LR
+    Browser[Browser] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:8080| CoreService[Go Core Service<br/>Port 8080]
+    CoreService -->|:5432| Postgres[(PostgreSQL)]
+
+    style Browser fill:#9C27B0
+    style Frontend fill:#2196F3
+    style CoreService fill:#00BCD4
+    style Postgres fill:#3F51B5
+```
+
 ## Prerequisites
 
 Before recording traffic with proxymock, ensure your development environment is properly set up:
