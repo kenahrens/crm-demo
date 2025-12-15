@@ -1,6 +1,7 @@
 -- First ensure there's at least one admin user in the system
+-- Default password is "password" - CHANGE THIS IN PRODUCTION!
 INSERT INTO users (username, password_hash, role)
-SELECT 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin'
+SELECT 'admin', '$2a$10$noHby.4IytctN8kY7q1wqu.xooGud2jXoDMcGSA70vsyU2bNYNW.C', 'admin'
 WHERE NOT EXISTS (SELECT 1 FROM users LIMIT 1);
 
 -- Get the admin user id (either the one we just created or an existing one)

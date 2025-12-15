@@ -77,3 +77,6 @@ htmlcov/
 
 # OS specific
 .DS_Store
+
+# Binary filesß
+core-service/core-service
