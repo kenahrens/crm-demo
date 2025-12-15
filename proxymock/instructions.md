@@ -355,13 +355,6 @@ proxymock replay \
   --test-against http://localhost:8080 \
   --out proxymock/results/replayed-database-$(date +%Y-%m-%d_%H-%M-%S)
 
-# Terminal 4: Compare results to detect regressions
-proxymock compare \
-  --in proxymock/recorded-database-<timestamp> \
-  --in proxymock/results/replayed-database-<timestamp> \
-  --verbosity 2
-```
-
 **Result**: API requests are replayed against the backend with mocked database responses. Differences between recorded and replayed traffic indicate potential regressions.
 
 ## Configuration Details
