@@ -84,6 +84,14 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 		return
 	}
 
+	// Extract user_id from JWT token context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	accountData.CreatedBy = userID.(uuid.UUID)
+
 	// Validate that the created_by user exists
 	userExists, err := h.repo.UserExists(accountData.CreatedBy)
 	if err != nil {
@@ -118,6 +126,14 @@ func (h *AccountHandler) UpdateAccount(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Extract user_id from JWT token context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	accountData.UpdatedBy = userID.(uuid.UUID)
 
 	account, err := h.repo.UpdateAccount(id, accountData)
 	if err != nil {

@@ -35,7 +35,7 @@ type AccountCreate struct {
 	State     string    `json:"state"`
 	Zip       string    `json:"zip"`
 	Country   string    `json:"country"`
-	CreatedBy uuid.UUID `json:"created_by" binding:"required"`
+	CreatedBy uuid.UUID `json:"created_by"`
 }
 
 // AccountUpdate is used for updating an existing account
@@ -49,5 +49,5 @@ type AccountUpdate struct {
 	State     string    `json:"state"`
 	Zip       string    `json:"zip"`
 	Country   string    `json:"country"`
-	UpdatedBy uuid.UUID `json:"updated_by" binding:"required"`
+	UpdatedBy uuid.UUID `json:"updated_by"`
 }
