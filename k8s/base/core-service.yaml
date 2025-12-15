@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: core-service
-        image: ghcr.io/kenahrens/crm-demo/core-service:1.2.1
+        image: ghcr.io/kenahrens/crm-demo/core-service:1.2.2
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
