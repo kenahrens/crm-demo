@@ -16,11 +16,58 @@ This documentation provides two ways to use proxymock:
 1. **Claude Code (Recommended)**: Simply describe what you want to do in natural language, and Claude will execute the proxymock commands for you. For example:
    - "Start proxymock recording mapping port 18080 to http://localhost:8080"
    - "Stop the proxymock recording"
-   - "Start a proxymock mock server using the recordings in proxymock/recorded-<timestamp>"
+   - "Start a proxymock mock server using the recordings in proxymock/recorded-<timestamp>, saving results to proxymock/results/mocked-<timestamp>"
 
 2. **CLI**: Use the `proxymock` command directly in your terminal with the exact commands shown in the documentation.
 
 Both methods achieve the same result - choose the one that's most convenient for your workflow.
+
+## Prerequisites
+
+Before recording traffic with proxymock, ensure your development environment is properly set up:
+
+### Required Software
+- **PostgreSQL 15+**: Must be installed and running
+- **Go 1.21+**: Required for the core service
+- **Node.js 18+** and **npm**: Required for the frontend
+- **proxymock**: Should be available via the MCP server or CLI
+
+### Database Setup
+
+PostgreSQL must be running before you can use the application. Set up the database:
+
+```bash
+# Ensure PostgreSQL is installed and running
+# Then create the database and run migrations
+cd core-service
+make setup-db
+```
+
+**Note**: If `make setup-db` fails:
+- Verify PostgreSQL is running: `pg_isready` or `brew services list` (macOS)
+- Check PostgreSQL user permissions
+- You may need to adjust database credentials in the Makefile or use environment variables
+
+### Verify Prerequisites
+
+Before proceeding with recording, verify all components work:
+
+```bash
+# Terminal 1: Start backend
+cd core-service
+make run
+# Should see: "Server running on port 8080"
+
+# Terminal 2: Start frontend
+cd frontend
+npm install  # First time only
+make start
+# Should see: "Local: http://localhost:3000"
+```
+
+If both services start successfully, you're ready to use proxymock.
+
+---
 
 ## Scenario 1: Backend API Mocking
 
@@ -56,12 +103,16 @@ graph LR
 
 #### Recording Steps
 
-1. **Start PostgreSQL**:
-   ```bash
-   make setup-db
-   ```
+**Prerequisites**: Ensure PostgreSQL is running and the database is set up (see [Prerequisites](#prerequisites) above).
 
-2. **Start proxymock Recording**:
+1. **Terminal 1: Start Core Service**:
+   ```bash
+   cd core-service
+   make run
+   ```
+   Wait until you see "Server running on port 8080"
+
+2. **Terminal 2: Start proxymock Recording**:
 
    **Using Claude Code (recommended)**:
    > "Start proxymock recording mapping port 18080 to http://localhost:8080, saving to proxymock/recorded-backend-api-<timestamp>"
@@ -78,7 +129,7 @@ graph LR
    - Captures all traffic between frontend and backend
    - Saves all API request/response pairs to the output directory
 
-3. **Configure Frontend to Use Proxymock Port**:
+3. **Terminal 3: Start Frontend with Proxymock Port**:
    ```bash
    cd frontend
    export VITE_API_PORT=18080
@@ -92,8 +143,9 @@ graph LR
 
 5. **Stop Recording**:
    - **Using Claude Code**: "Stop the proxymock recording"
-   - **Or via CLI**: Press Ctrl+C
+   - **Or via CLI**: Press Ctrl+C in Terminal 2 (proxymock)
    - RRPair files are saved to `proxymock/recorded-backend-api-*/`
+   - Stop the core service (Ctrl+C in Terminal 1) and frontend (Ctrl+C in Terminal 3) when done
 
 ### Phase 2: Mocking Backend API
 
@@ -123,7 +175,7 @@ graph LR
 #### Mocking Steps
 
 **Using Claude Code**:
-1. "Start a proxymock mock server using recordings from proxymock/recorded-backend-api-<timestamp> mapping port 18080 to http://localhost:8080"
+1. "Start a proxymock mock server using recordings from proxymock/recorded-backend-api-<timestamp> mapping port 18080 to http://localhost:8080, saving results to proxymock/results/mocked-backend-api-<timestamp>"
 2. Start frontend: `cd frontend && VITE_API_PORT=18080 make start`
 3. Run tests: `cd frontend && npx cypress run`
 
@@ -132,7 +184,8 @@ graph LR
 # Terminal 1: Start mock server
 proxymock mock \
   --in proxymock/recorded-backend-api-<timestamp> \
-  --map 18080=http://localhost:8080
+  --map 18080=http://localhost:8080 \
+  --out proxymock/results/mocked-backend-api-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 2: Start frontend
 cd frontend
@@ -144,7 +197,7 @@ cd frontend
 npx cypress run
 ```
 
-**Result**: Frontend runs against mocked backend responses. No real backend or database needed.
+**Result**: Frontend runs against mocked backend responses. No real backend or database needed. Mock server saves any unmatched requests or passthroughs to the output directory.
 
 ## Scenario 2: Database Mocking for Backend Testing
 
@@ -183,56 +236,55 @@ graph LR
 
 #### Recording Steps
 
-1. **Start PostgreSQL**:
-   ```bash
-   make setup-db
-   ```
+**Prerequisites**: Ensure PostgreSQL is running and the database is set up (see [Prerequisites](#prerequisites) above).
 
-2. **Start proxymock Recording for Database**:
+1. **Terminal 1: Start proxymock Recording for Database**:
 
    **Using Claude Code (recommended)**:
    > "Start proxymock recording mapping port 15432 to tcp://localhost:5432 for database traffic, saving to proxymock/recorded-database-<timestamp>"
 
    **Or via CLI**:
    ```bash
-   # Terminal 1: Start proxymock for database traffic
    proxymock record \
      --map 15432=tcp://localhost:5432 \
      --out proxymock/recorded-database-$(date +%Y-%m-%d_%H-%M-%S)
    ```
 
-3. **Start proxymock Recording for Inbound Traffic**:
+2. **Terminal 2: Start proxymock Recording for Inbound Traffic** (this will also start the core service):
 
    **Using Claude Code (recommended)**:
    > "Start proxymock recording on proxy-in-port 18080 with app-port 8080 and DB_PORT=15432, saving to proxymock/recorded-database-<timestamp>"
 
    **Or via CLI**:
    ```bash
-   # Terminal 2: Start proxymock for inbound API traffic
-   # Configure core service to use database port 15432
+   # proxymock will automatically START the core service with DB_PORT=15432
    DB_PORT=15432 proxymock record \
      --app-port 8080 \
      --proxy-in-port 18080 \
-     --out proxymock/recorded-database-$(date +%Y-%m-%d_%H-%M-%S)
+     --out proxymock/recorded-database-$(same-timestamp-as-step-1)
    ```
 
-   Note: Both proxymock instances should write to the same output directory to keep all RRPairs together.
+   **Note**: The `--app-port 8080` flag tells proxymock to automatically start the core service on port 8080. You don't need to start the core service separately. The `DB_PORT=15432` environment variable ensures the core service connects to the proxymock database instance on port 15432.
+
+   **Important**: Both proxymock instances should write to the same output directory to keep all RRPairs together. Use the same timestamp from step 1.
+
+3. **Terminal 3: Start Frontend with Proxymock Port**:
+   ```bash
+   cd frontend
+   export VITE_API_PORT=18080
+   make start
+   ```
 
 4. **Generate Traffic**:
-   - Start frontend pointing to port 18080:
-     ```bash
-     cd frontend
-     export VITE_API_PORT=18080
-     make start
-     ```
    - Open browser to http://localhost:3000
-   - Use the application to trigger database queries
+   - Use the application to trigger database queries (create contacts, view lists, etc.)
    - All API calls and database queries are recorded as RRPair files
 
 5. **Stop Recording**:
    - **Using Claude Code**: "Stop the proxymock recording"
-   - **Or via CLI**: Press Ctrl+C on both proxymock processes
+   - **Or via CLI**: Press Ctrl+C in Terminal 1 and Terminal 2 (both proxymock processes)
    - RRPair files are saved to `proxymock/recorded-database-*/`
+   - Stop the frontend (Ctrl+C in Terminal 3) when done
 
 ### Phase 2: Replaying Tests with Mocked Database
 
@@ -266,8 +318,8 @@ graph LR
 #### Replay/Testing Steps
 
 **Using Claude Code**:
-1. "Start a proxymock mock server for database using recordings from proxymock/recorded-database-<timestamp> mapping port 15432 to tcp://localhost:5432"
-2. "Replay API traffic from proxymock/recorded-database-<timestamp> against http://localhost:8080 and save to proxymock/replayed-<timestamp>"
+1. "Start a proxymock mock server for database using recordings from proxymock/recorded-database-<timestamp> mapping port 15432 to tcp://localhost:5432, saving results to proxymock/results/mocked-database-<timestamp>"
+2. "Replay API traffic from proxymock/recorded-database-<timestamp> against http://localhost:8080 and save to proxymock/results/replayed-database-<timestamp>"
 3. "Compare recorded traffic with replayed traffic to detect differences"
 
 **Or via CLI**:
@@ -275,7 +327,8 @@ graph LR
 # Terminal 1: Start proxymock mock for database
 proxymock mock \
   --in proxymock/recorded-database-<timestamp> \
-  --map 15432=tcp://localhost:5432
+  --map 15432=tcp://localhost:5432 \
+  --out proxymock/results/mocked-database-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 2: Start core service with database pointing to proxymock
 cd core-service
@@ -286,12 +339,12 @@ make run
 proxymock replay \
   --in proxymock/recorded-database-<timestamp> \
   --test-against http://localhost:8080 \
-  --out proxymock/replayed-$(date +%Y-%m-%d_%H-%M-%S)
+  --out proxymock/results/replayed-database-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 4: Compare results to detect regressions
 proxymock compare \
   --in proxymock/recorded-database-<timestamp> \
-  --in proxymock/replayed-<timestamp> \
+  --in proxymock/results/replayed-database-<timestamp> \
   --verbosity 2
 ```
 
@@ -313,7 +366,10 @@ proxymock compare \
 proxymock/
 ├── recorded-backend-api-YYYY-MM-DD_HH-MM-SS/   # Scenario 1: Backend API recordings
 ├── recorded-database-YYYY-MM-DD_HH-MM-SS/      # Scenario 2: Database recordings
-└── replayed-YYYY-MM-DD_HH-MM-SS/               # Replay results for comparison
+└── results/
+    ├── mocked-backend-api-YYYY-MM-DD_HH-MM-SS/    # Mock server results for Scenario 1
+    ├── mocked-database-YYYY-MM-DD_HH-MM-SS/       # Mock server results for Scenario 2
+    └── replayed-database-YYYY-MM-DD_HH-MM-SS/     # Replay results for comparison
 ```
 
 ### Environment Variables
@@ -417,15 +473,27 @@ If replay comparison shows differences:
 
 ## Common Workflows
 
+**Prerequisites for all workflows**: Ensure PostgreSQL is running and the database is set up (see [Prerequisites](#prerequisites) section).
+
 ### Frontend Development (Scenario 1)
 
 ```bash
 # 1. Record backend API traffic
-proxymock record --map 18080=http://localhost:8080 --out proxymock/recorded-backend-api-$(date +%Y-%m-%d_%H-%M-%S)
-# Generate traffic through frontend at port 18080, then stop recording
+# Terminal 1: Start core service
+cd core-service && make run
 
-# 2. Develop frontend with mocked backend
-proxymock mock --in proxymock/recorded-backend-api-<timestamp> --map 18080=http://localhost:8080
+# Terminal 2: Start proxymock recording
+proxymock record --map 18080=http://localhost:8080 --out proxymock/recorded-backend-api-$(date +%Y-%m-%d_%H-%M-%S)
+
+# Terminal 3: Start frontend and generate traffic
+cd frontend && VITE_API_PORT=18080 make start
+# Use the app, then stop recording (Ctrl+C in Terminal 2)
+
+# 2. Develop frontend with mocked backend (no real backend needed)
+# Terminal 1: Start proxymock mock server
+proxymock mock --in proxymock/recorded-backend-api-<timestamp> --map 18080=http://localhost:8080 --out proxymock/results/mocked-backend-api-$(date +%Y-%m-%d_%H-%M-%S)
+
+# Terminal 2: Start frontend
 cd frontend && VITE_API_PORT=18080 make start
 ```
 
@@ -433,28 +501,28 @@ cd frontend && VITE_API_PORT=18080 make start
 
 ```bash
 # 1. Record API and database traffic
-# Terminal 1: Record database traffic
+# Terminal 1: Start proxymock for database
 proxymock record --map 15432=tcp://localhost:5432 --out proxymock/recorded-database-$(date +%Y-%m-%d_%H-%M-%S)
 
-# Terminal 2: Record inbound API traffic
+# Terminal 2: Start proxymock for inbound (automatically starts core service)
 DB_PORT=15432 proxymock record --app-port 8080 --proxy-in-port 18080 --out proxymock/recorded-database-<same-timestamp>
 
-# Terminal 3: Generate traffic through frontend
+# Terminal 3: Start frontend and generate traffic
 cd frontend && VITE_API_PORT=18080 make start
-# Use the app, then stop both recordings
+# Use the app, then stop both recordings (Ctrl+C in Terminals 1 and 2)
 
 # 2. Test backend with mocked database
 # Terminal 1: Start database mock
-proxymock mock --in proxymock/recorded-database-<timestamp> --map 15432=tcp://localhost:5432
+proxymock mock --in proxymock/recorded-database-<timestamp> --map 15432=tcp://localhost:5432 --out proxymock/results/mocked-database-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 2: Start backend with mocked database
 cd core-service && DB_PORT=15432 make run
 
 # Terminal 3: Replay tests
-proxymock replay --in proxymock/recorded-database-<timestamp> --test-against http://localhost:8080 --out proxymock/replayed-<timestamp>
+proxymock replay --in proxymock/recorded-database-<timestamp> --test-against http://localhost:8080 --out proxymock/results/replayed-database-$(date +%Y-%m-%d_%H-%M-%S)
 
 # Terminal 4: Compare for regressions
-proxymock compare --in proxymock/recorded-database-<timestamp> --in proxymock/replayed-<timestamp>
+proxymock compare --in proxymock/recorded-database-<timestamp> --in proxymock/results/replayed-database-<timestamp>
 ```
 
 ## Related Documentation
