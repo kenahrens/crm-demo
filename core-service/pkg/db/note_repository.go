@@ -19,6 +19,9 @@ func NewNoteRepository(db *DB) *NoteRepository {
 }
 
 // GetAllNotes retrieves all notes from the database
+// This method uses a two-query approach to avoid N+1 queries:
+// 1. Fetch all notes
+// 2. Fetch all associations for those notes in a single query
 func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 	query := `SELECT id, content, created_by, created_at, updated_at FROM notes ORDER BY created_at DESC`
 	rows, err := r.db.Query(query)
@@ -28,9 +31,12 @@ func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 	defer rows.Close()
 
 	var notes []models.Note
+	var noteIDs []uuid.UUID
+	noteIndexMap := make(map[uuid.UUID]int)
+
 	for rows.Next() {
 		var note models.Note
-		var createdBy sql.NullString // Handle NULL values
+		var createdBy sql.NullString
 
 		if err := rows.Scan(
 			&note.ID,
@@ -42,7 +48,6 @@ func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 			return nil, fmt.Errorf("error scanning note row: %w", err)
 		}
 
-		// Convert NullString to UUID if valid
 		if createdBy.Valid {
 			parsedID, err := uuid.Parse(createdBy.String)
 			if err != nil {
@@ -51,29 +56,9 @@ func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 			note.CreatedBy = parsedID
 		}
 
-		// Get note associations
-		associationsQuery := `SELECT record_id, record_type FROM note_associations WHERE note_id = $1`
-		associationRows, err := r.db.Query(associationsQuery, note.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error querying note associations: %w", err)
-		}
-
-		var associations []models.RecordAssociation
-		for associationRows.Next() {
-			var association models.RecordAssociation
-			if err := associationRows.Scan(&association.RecordID, &association.RecordType); err != nil {
-				associationRows.Close()
-				return nil, fmt.Errorf("error scanning note association row: %w", err)
-			}
-			associations = append(associations, association)
-		}
-		associationRows.Close()
-
-		if err := associationRows.Err(); err != nil {
-			return nil, fmt.Errorf("error iterating note association rows: %w", err)
-		}
-
-		note.Records = associations
+		note.Records = []models.RecordAssociation{}
+		noteIndexMap[note.ID] = len(notes)
+		noteIDs = append(noteIDs, note.ID)
 		notes = append(notes, note)
 	}
 
@@ -81,7 +66,52 @@ func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 		return nil, fmt.Errorf("error iterating note rows: %w", err)
 	}
 
+	if len(noteIDs) == 0 {
+		return notes, nil
+	}
+
+	associations, err := r.getAssociationsForNotes(noteIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for noteID, assocs := range associations {
+		if idx, ok := noteIndexMap[noteID]; ok {
+			notes[idx].Records = assocs
+		}
+	}
+
 	return notes, nil
+}
+
+// getAssociationsForNotes fetches all associations for the given note IDs in a single query
+func (r *NoteRepository) getAssociationsForNotes(noteIDs []uuid.UUID) (map[uuid.UUID][]models.RecordAssociation, error) {
+	if len(noteIDs) == 0 {
+		return make(map[uuid.UUID][]models.RecordAssociation), nil
+	}
+
+	query := `SELECT note_id, record_id, record_type FROM note_associations WHERE note_id = ANY($1)`
+	rows, err := r.db.Query(query, noteIDs)
+	if err != nil {
+		return nil, fmt.Errorf("error querying note associations: %w", err)
+	}
+	defer rows.Close()
+
+	associations := make(map[uuid.UUID][]models.RecordAssociation)
+	for rows.Next() {
+		var noteID uuid.UUID
+		var association models.RecordAssociation
+		if err := rows.Scan(&noteID, &association.RecordID, &association.RecordType); err != nil {
+			return nil, fmt.Errorf("error scanning note association row: %w", err)
+		}
+		associations[noteID] = append(associations[noteID], association)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating note association rows: %w", err)
+	}
+
+	return associations, nil
 }
 
 // GetNoteByID retrieves a single note by ID
@@ -141,6 +171,9 @@ func (r *NoteRepository) GetNoteByID(id uuid.UUID) (*models.Note, error) {
 }
 
 // GetNotesByRecordID retrieves all notes for a specific record (account, contact, opportunity)
+// This method uses a two-query approach to avoid N+1 queries:
+// 1. Fetch all notes for the record
+// 2. Fetch all associations for those notes in a single query
 func (r *NoteRepository) GetNotesByRecordID(recordID uuid.UUID, recordType string) ([]models.Note, error) {
 	query := `
 		SELECT n.id, n.content, n.created_by, n.created_at, n.updated_at 
@@ -157,9 +190,12 @@ func (r *NoteRepository) GetNotesByRecordID(recordID uuid.UUID, recordType strin
 	defer rows.Close()
 
 	var notes []models.Note
+	var noteIDs []uuid.UUID
+	noteIndexMap := make(map[uuid.UUID]int)
+
 	for rows.Next() {
 		var note models.Note
-		var createdBy sql.NullString // Handle NULL values
+		var createdBy sql.NullString
 
 		if err := rows.Scan(
 			&note.ID,
@@ -171,7 +207,6 @@ func (r *NoteRepository) GetNotesByRecordID(recordID uuid.UUID, recordType strin
 			return nil, fmt.Errorf("error scanning note row: %w", err)
 		}
 
-		// Convert NullString to UUID if valid
 		if createdBy.Valid {
 			parsedID, err := uuid.Parse(createdBy.String)
 			if err != nil {
@@ -180,34 +215,29 @@ func (r *NoteRepository) GetNotesByRecordID(recordID uuid.UUID, recordType strin
 			note.CreatedBy = parsedID
 		}
 
-		// Get note associations
-		associationsQuery := `SELECT record_id, record_type FROM note_associations WHERE note_id = $1`
-		associationRows, err := r.db.Query(associationsQuery, note.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error querying note associations: %w", err)
-		}
-
-		var associations []models.RecordAssociation
-		for associationRows.Next() {
-			var association models.RecordAssociation
-			if err := associationRows.Scan(&association.RecordID, &association.RecordType); err != nil {
-				associationRows.Close()
-				return nil, fmt.Errorf("error scanning note association row: %w", err)
-			}
-			associations = append(associations, association)
-		}
-		associationRows.Close()
-
-		if err := associationRows.Err(); err != nil {
-			return nil, fmt.Errorf("error iterating note association rows: %w", err)
-		}
-
-		note.Records = associations
+		note.Records = []models.RecordAssociation{}
+		noteIndexMap[note.ID] = len(notes)
+		noteIDs = append(noteIDs, note.ID)
 		notes = append(notes, note)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating note rows: %w", err)
+	}
+
+	if len(noteIDs) == 0 {
+		return notes, nil
+	}
+
+	associations, err := r.getAssociationsForNotes(noteIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for noteID, assocs := range associations {
+		if idx, ok := noteIndexMap[noteID]; ok {
+			notes[idx].Records = assocs
+		}
 	}
 
 	return notes, nil
