@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/kenahrens/crm-demo/frontend:1.2.2
+        image: ghcr.io/kenahrens/crm-demo/frontend:1.2.3
         ports:
         - containerPort: 80
         resources:
