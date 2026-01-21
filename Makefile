@@ -30,16 +30,16 @@ bump-version: ## Bump version (usage: make bump-version TYPE=major|minor|patch)
 		echo "Error: TYPE must be one of: major, minor, patch"; \
 		exit 1; \
 	fi
-	@current=$$(cat $(VERSION_FILE)); \
+	@current=$$(cat $(VERSION_FILE) | tr -d 'v'); \
 	major=$$(echo $$current | cut -d. -f1); \
 	minor=$$(echo $$current | cut -d. -f2); \
 	patch=$$(echo $$current | cut -d. -f3); \
 	if [ "$(TYPE)" = "major" ]; then \
-		new_version="$$((major + 1)).0.0"; \
+		new_version="v$$((major + 1)).0.0"; \
 	elif [ "$(TYPE)" = "minor" ]; then \
-		new_version="$$major.$$((minor + 1)).0"; \
+		new_version="v$$major.$$((minor + 1)).0"; \
 	else \
-		new_version="$$major.$$minor.$$((patch + 1))"; \
+		new_version="v$$major.$$minor.$$((patch + 1))"; \
 	fi; \
 	echo "$$new_version" > $(VERSION_FILE); \
 	echo "Version bumped from $$current to $$new_version"; \
