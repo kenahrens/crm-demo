@@ -46,18 +46,17 @@ bump-version: ## Bump version (usage: make bump-version TYPE=major|minor|patch)
 	echo "Updating k8s manifests..."; \
 	sed -i.bak "s|$(CORE_SERVICE_IMAGE):[^ ]*|$(CORE_SERVICE_IMAGE):$$new_version|g" k8s/base/core-service.yaml && rm k8s/base/core-service.yaml.bak; \
 	sed -i.bak "s|$(FRONTEND_IMAGE):[^ ]*|$(FRONTEND_IMAGE):$$new_version|g" k8s/base/frontend.yaml && rm k8s/base/frontend.yaml.bak; \
-	echo "Creating git tag v$$new_version..."; \
 	git add $(VERSION_FILE) k8s/base/core-service.yaml k8s/base/frontend.yaml; \
 	git commit -m "Bump version to $$new_version"; \
-	git tag -a "v$$new_version" -m "Version $$new_version"; \
 	echo "✅ Version bump complete!"; \
 	echo "   - VERSION file updated to $$new_version"; \
 	echo "   - k8s manifests updated"; \
-	echo "   - Git commit and tag v$$new_version created"; \
+	echo "   - Git commit created"; \
 	echo ""; \
-	echo "Next steps:"; \
+	echo "Next step:"; \
 	echo "   git push origin main"; \
-	echo "   git push origin v$$new_version"
+	echo ""; \
+	echo "CI will automatically build and tag Docker images with version $$new_version"
 
 docker-build: ## Build all Docker images with version tags
 	@echo "Building Docker images with version $(VERSION)..."
