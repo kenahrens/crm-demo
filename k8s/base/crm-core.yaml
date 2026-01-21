@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: crm-core
-        image: ghcr.io/kenahrens/crm-demo/crm-core:v1.3.1
+        image: ghcr.io/kenahrens/crm-demo/crm-core:v1.3.2
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
