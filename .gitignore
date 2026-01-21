@@ -78,5 +78,15 @@ htmlcov/
 # OS specific
 .DS_Store
 
-# Binary filesß
+# Binary files
 core-service/core-service
+
+# proxymock - Ignore recordings and results, keep generated mocks
+proxymock/recorded-*/
+proxymock/results/
+proxymock/prod-traffic-samples/
+proxymock/investigation-*/
+proxymock/daily-checks/
+proxymock/pre-deploy/
+# Keep: proxymock/generated-mocks/ (commit these)
+# Keep: proxymock/golden-workflows/ (commit these if created)
