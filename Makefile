@@ -5,8 +5,8 @@ VERSION := $(shell cat VERSION 2>/dev/null || echo "0.0.0")
 VERSION_FILE := VERSION
 
 # Docker image names
-CORE_SERVICE_IMAGE := ghcr.io/kenahrens/crm-demo/core-service
-FRONTEND_IMAGE := ghcr.io/kenahrens/crm-demo/frontend
+CORE_SERVICE_IMAGE := ghcr.io/kenahrens/crm-demo/crm-core
+FRONTEND_IMAGE := ghcr.io/kenahrens/crm-demo/crm-frontend
 
 help: ## Display this help message
 	@echo "CRM Demo - Version Management"

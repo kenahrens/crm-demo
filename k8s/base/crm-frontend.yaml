@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: crm-frontend
   labels:
     app: crm-demo
-    component: frontend
+    component: crm-frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: crm-demo
-      component: frontend
+      component: crm-frontend
   template:
     metadata:
       labels:
         app: crm-demo
-        component: frontend
+        component: crm-frontend
     spec:
       containers:
-      - name: frontend
-        image: ghcr.io/kenahrens/crm-demo/frontend:v1.2.3
+      - name: crm-frontend
+        image: ghcr.io/kenahrens/crm-demo/crm-frontend:v1.3.1
         ports:
         - containerPort: 80
         resources:
@@ -45,10 +45,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: crm-frontend
   labels:
     app: crm-demo
-    component: frontend
+    component: crm-frontend
 spec:
   ports:
   - port: 80
@@ -56,7 +56,7 @@ spec:
     protocol: TCP
   selector:
     app: crm-demo
-    component: frontend
+    component: crm-frontend
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -72,14 +72,14 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: crm-frontend
             port:
               number: 80
       - path: /v1/api
         pathType: Prefix
         backend:
           service:
-            name: core-service
+            name: crm-core
             port:
               number: 80
 
