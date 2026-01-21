@@ -11,8 +11,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/kenahrens/crm-demo/core-service
-  FRONTEND_IMAGE: ghcr.io/kenahrens/crm-demo/frontend
+  BACKEND_IMAGE: ghcr.io/kenahrens/crm-demo/crm-core
+  FRONTEND_IMAGE: ghcr.io/kenahrens/crm-demo/crm-frontend
 
 permissions:
   contents: read
