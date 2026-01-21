@@ -44,9 +44,9 @@ bump-version: ## Bump version (usage: make bump-version TYPE=major|minor|patch)
 	echo "$$new_version" > $(VERSION_FILE); \
 	echo "Version bumped from $$current to $$new_version"; \
 	echo "Updating k8s manifests..."; \
-	sed -i.bak "s|$(CORE_SERVICE_IMAGE):[^ ]*|$(CORE_SERVICE_IMAGE):$$new_version|g" k8s/base/core-service.yaml && rm k8s/base/core-service.yaml.bak; \
-	sed -i.bak "s|$(FRONTEND_IMAGE):[^ ]*|$(FRONTEND_IMAGE):$$new_version|g" k8s/base/frontend.yaml && rm k8s/base/frontend.yaml.bak; \
-	git add $(VERSION_FILE) k8s/base/core-service.yaml k8s/base/frontend.yaml; \
+	sed -i.bak "s|$(CORE_SERVICE_IMAGE):[^ ]*|$(CORE_SERVICE_IMAGE):$$new_version|g" k8s/base/crm-core.yaml && rm k8s/base/crm-core.yaml.bak; \
+	sed -i.bak "s|$(FRONTEND_IMAGE):[^ ]*|$(FRONTEND_IMAGE):$$new_version|g" k8s/base/crm-frontend.yaml && rm k8s/base/crm-frontend.yaml.bak; \
+	git add $(VERSION_FILE) k8s/base/crm-core.yaml k8s/base/crm-frontend.yaml; \
 	git commit -m "Bump version to $$new_version"; \
 	echo "✅ Version bump complete!"; \
 	echo "   - VERSION file updated to $$new_version"; \

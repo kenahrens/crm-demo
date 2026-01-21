@@ -75,11 +75,4 @@ spec:
             name: crm-frontend
             port:
               number: 80
-      - path: /v1/api
-        pathType: Prefix
-        backend:
-          service:
-            name: crm-core
-            port:
-              number: 80
 

@@ -24,16 +24,19 @@ kind: Deployment
 metadata:
   name: crm-core
   labels:
-    app: crm-core
+    app: crm-demo
+    component: crm-core
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: crm-core
+      app: crm-demo
+      component: crm-core
   template:
     metadata:
       labels:
-        app: crm-core
+        app: crm-demo
+        component: crm-core
     spec:
       containers:
       - name: crm-core
@@ -70,9 +73,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: crm-core
+  labels:
+    app: crm-demo
+    component: crm-core
 spec:
   selector:
-    app: crm-core
+    app: crm-demo
+    component: crm-core
   ports:
   - port: 80
     targetPort: 8080
