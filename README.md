@@ -11,7 +11,11 @@ This CRM demo showcases enterprise-grade architecture patterns and modern develo
 - **Full-Stack CRM**: Complete account, contact, and opportunity management with JWT authentication
 - **Modern Tech Stack**: Go/Gin backend, React/Material-UI frontend, PostgreSQL database
 - **API-First Design**: RESTful API with OpenAPI 3.0 specification
-- **proxymock Integration**: Demonstrates traffic recording, mocking, and replay for advanced testing workflows (see [proxymock documentation](proxymock/instructions.md))
+- **Progressive Testing with Mocks**: Comprehensive mocking strategy from OpenAPI-generated mocks to production traffic replay
+  - **CRAWL**: Frontend development with synthetic mocks (no backend needed)
+  - **WALK**: Automated UI tests + recorded golden workflows
+  - **RUN**: Production traffic validation with automated regression detection
+- **proxymock Integration**: Traffic recording, mocking, and replay for realistic testing (see [MOCKING.md](MOCKING.md) and [proxymock documentation](proxymock/instructions.md))
 
 ## 🚦 Prerequisites
 
@@ -70,8 +74,95 @@ npx cypress run
 **Writing Tests:**
 Cypress tests are located in `frontend/cypress/e2e/`. Tests can interact with the full stack including frontend, backend, and database.
 
+### Testing with Mocks: Progressive Methodology
+
+This project demonstrates a progressive testing approach using proxymock, from initial development to production-grade validation.
+
+#### 🐣 CRAWL: OpenAPI Mocks for Fast Development
+
+**Goal:** Enable fast frontend development with no backend dependencies
+
+```bash
+# Start mock server with OpenAPI-generated mocks
+proxymock mock --in-directory proxymock/generated-mocks
+
+# Start frontend
+./start-frontend-with-mocks.sh
+```
+
+**What you get:**
+- 85 mock responses covering all 26 API endpoints
+- All status codes (200, 201, 400, 404, 500, etc.)
+- Instant feedback during UI development
+- Contract validation against OpenAPI spec
+
+**Manual testing checklist:**
+- Login flows (valid/invalid credentials)
+- CRUD operations for accounts, contacts, opportunities
+- Error handling and edge cases
+- Form validation and UI states
+
+#### 🚶 WALK: Automated UI Tests + Golden Workflows
+
+**Goal:** Automate testing and capture real workflows
+
+```bash
+# Run automated UI tests with mocks
+./run-ui-tests-with-mocks.sh
+
+# Record real workflows from live system
+proxymock record --map 18080=http://localhost:8080 \
+  --out proxymock/golden-workflows-$(date +%Y-%m-%d)
+
+# Later: Replay to detect regressions
+proxymock replay \
+  --in proxymock/golden-workflows-2025-01-21 \
+  --test-against http://localhost:8080 \
+  --out proxymock/results/replay-$(date +%Y-%m-%d)
+```
+
+**What you find:**
+- Automated regression detection in CI/CD
+- API contract breakages (field changes, type mismatches)
+- Response format changes
+- Status code regressions
+
+#### 🏃 RUN: Production Traffic for Real-World Testing
+
+**Goal:** Fully automated testing with actual production patterns
+
+```bash
+# Pull production errors for investigation
+proxymock pull --service crm-core \
+  --filter-query '(status NOT "200")' \
+  --start-time "$(date -u -v-1d +%Y-%m-%dT00:00:00Z)" \
+  --snapshot-name "daily-errors" \
+  --out proxymock/investigation-$(date +%Y-%m-%d)
+
+# Replay against current code
+proxymock replay \
+  --in proxymock/investigation-* \
+  --test-against http://localhost:8080
+```
+
+**What you find:**
+- Real edge cases from actual users
+- Data-specific bugs (Unicode, nulls, special characters)
+- Performance issues with real data distributions
+- Race conditions from concurrent usage patterns
+
+**Automated workflows:**
+- Daily production error checks (GitHub Actions cron)
+- Pre-deployment validation against staging
+- Continuous regression testing with live traffic
+- Slack/email notifications on failures
+
+See [MOCKING.md](MOCKING.md) for complete documentation including CI/CD integration examples and detailed workflows.
+
+---
+
 ### API Testing with proxymock
-The project includes proxymock integration for recording and replaying API traffic, enabling realistic testing scenarios and regression detection. See [proxymock documentation](proxymock/instructions.md) for detailed setup and usage instructions.
+The project includes proxymock integration for recording and replaying API traffic, enabling realistic testing scenarios and regression detection. See [proxymock documentation](proxymock/instructions.md) for detailed traffic recording workflows.
 
 ## 🔧 Development
 
@@ -114,7 +205,53 @@ graph LR
     style Postgres fill:#336791,stroke:#333,stroke-width:2px
 ```
 
-### 1. Baseline Development
+### 1. Frontend Development with OpenAPI Mocks (Recommended for UI Development)
+
+Run the frontend with OpenAPI-generated mocks - no backend or database required:
+
+```mermaid
+graph LR
+    Browser[Browser] -->|:3000| Frontend[React Frontend]
+    Frontend -->|:4140| MockServer[proxymock Server]
+    MockServer -->|85 RRPairs| Mocks[OpenAPI Mocks]
+
+    style Browser fill:#f9f,stroke:#333,stroke-width:2px
+    style Frontend fill:#61dafb,stroke:#333,stroke-width:2px
+    style MockServer fill:#17b978,stroke:#333,stroke-width:2px
+    style Mocks fill:#ffd700,stroke:#333,stroke-width:2px
+```
+
+**How to run:**
+
+```bash
+# Start the mock server with OpenAPI-generated mocks
+proxymock mock --in-directory proxymock/generated-mocks
+
+# Start the frontend configured to use mocks
+./start-frontend-with-mocks.sh
+```
+
+**Access the application:**
+- Frontend: http://localhost:3000
+- Uses 85 mock RRPair files covering all 26 API endpoints
+
+**Benefits:**
+- Fast frontend development without backend dependencies
+- Test all API scenarios including error responses (400, 404, 500)
+- Consistent, predictable responses
+- No database setup required
+
+**Regenerating mocks when OpenAPI spec changes:**
+```bash
+proxymock generate --out proxymock/generated-mocks \
+  --include-optional core-service/api/openapi/v1.yaml
+```
+
+See [MOCKING.md](MOCKING.md) for comprehensive mocking documentation including the Crawl → Walk → Run progressive testing methodology, CI/CD integration examples, and detailed workflows.
+
+---
+
+### 2. Baseline Development
 
 The standard development setup with all services running locally:
 
@@ -192,6 +329,54 @@ The CRM system manages four core entities:
 - **Contacts**: Individual people associated with accounts
 - **Opportunities**: Sales deals in various stages
 - **Notes**: Flexible annotations linked to any entity
+
+## 🎯 Mock Types Quick Reference
+
+This project includes three types of mocks for different testing scenarios:
+
+### 1. OpenAPI-Generated Mocks ✨
+**Location:** `proxymock/generated-mocks/`
+**Use for:** Initial UI development, contract validation, no backend available
+
+```bash
+proxymock mock --in-directory proxymock/generated-mocks
+./start-frontend-with-mocks.sh
+```
+
+**Pros:** Complete API coverage, all status codes, fast regeneration
+**Cons:** Synthetic data, not realistic workflows
+
+### 2. Recorded Real Traffic 📹
+**Location:** `proxymock/recorded-*/` or `proxymock/golden-workflows/`
+**Use for:** Testing actual workflows, realistic data patterns, integration testing
+
+```bash
+# Record while using the app
+proxymock record --map 18080=http://localhost:8080 --out proxymock/golden-workflows
+
+# Replay to detect regressions
+proxymock replay --in proxymock/golden-workflows --test-against http://localhost:8080
+```
+
+**Pros:** Real user interactions, actual data values, workflow sequences
+**Cons:** Requires backend to record, limited to exercised flows
+
+### 3. Production Traffic 🚀
+**Location:** `proxymock/prod-traffic-samples/`
+**Use for:** Finding edge cases, pre-deployment validation, investigating production issues
+
+```bash
+# Pull from production
+proxymock pull --service crm-core \
+  --filter-query '(status NOT "200")' \
+  --start-time "$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ)" \
+  --out proxymock/investigation
+```
+
+**Pros:** Real user patterns, actual edge cases, production data distributions
+**Cons:** Requires proxymock cloud, may contain sensitive data
+
+See [MOCKING.md](MOCKING.md) for detailed comparison and usage guidance.
 
 ## 🤝 Contributing
 

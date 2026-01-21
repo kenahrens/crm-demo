@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: crm-core
-        image: ghcr.io/kenahrens/crm-demo/crm-core:v1.3.1
+        image: ghcr.io/kenahrens/crm-demo/crm-core:v1.3.2
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -51,13 +51,13 @@ spec:
             name: crm-core-secrets
         readinessProbe:
           httpGet:
-            path: /health
+            path: /v1/api/health
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /health
+            path: /v1/api/health
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 20
