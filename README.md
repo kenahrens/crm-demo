@@ -303,13 +303,13 @@ There is no default user. Create the first admin user:
      -d '{
        "username": "admin",
        "email": "admin@example.com",
-       "password": "adminpassword",
+        "password": "password",
        "role": "admin"
      }'
    ```
 3. Re-enable auth, restart the service, and log in with:
    - Email: `admin@example.com`
-   - Password: `adminpassword`
+   - Password: `password`
 
 
 
