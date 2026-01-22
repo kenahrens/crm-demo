@@ -108,17 +108,15 @@ func (h *ContactHandler) CreateContact(c *gin.Context) {
 		return
 	}
 
-    // Always set CreatedBy from authenticated user context
-    if uidVal, exists := c.Get("user_id"); exists {
-        if uid, ok := uidVal.(uuid.UUID); ok {
-            contactData.CreatedBy = uid
-        }
-    }
-
-	// Validate account ID if provided
-	if contactData.AccountID != uuid.Nil {
-		// Optional: Check if account exists
+	// Always set CreatedBy from authenticated user context
+	if uidVal, exists := c.Get("user_id"); exists {
+		if uid, ok := uidVal.(uuid.UUID); ok {
+			contactData.CreatedBy = uid
+		}
 	}
+
+	// Note: Account ID validation could be added here if needed
+	// Currently we allow contacts without account association
 
 	contact, err := h.repo.CreateContact(contactData)
 	if err != nil {
@@ -144,10 +142,8 @@ func (h *ContactHandler) UpdateContact(c *gin.Context) {
 		return
 	}
 
-	// Validate account ID if provided
-	if contactData.AccountID != uuid.Nil {
-		// Optional: Check if account exists
-	}
+	// Note: Account ID validation could be added here if needed
+	// Currently we allow contacts without account association
 
 	contact, err := h.repo.UpdateContact(id, contactData)
 	if err != nil {

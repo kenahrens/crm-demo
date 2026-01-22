@@ -27,7 +27,11 @@ func (r *AccountRepository) GetAllAccounts() ([]models.Account, error) {
 		fmt.Printf("[ERROR] GetAllAccounts: query failed: %v\n", err)
 		return nil, fmt.Errorf("error querying accounts: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetAllAccounts: error closing rows: %v\n", err)
+		}
+	}()
 
 	var accounts []models.Account
 	rowNum := 0
@@ -133,7 +137,11 @@ func (r *AccountRepository) GetAccountByID(id uuid.UUID) (*models.Account, error
 	if err != nil {
 		return nil, fmt.Errorf("error querying contacts for account: %w", err)
 	}
-	defer contactRows.Close()
+	defer func() {
+		if err := contactRows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetAccountByID: error closing contact rows: %v\n", err)
+		}
+	}()
 
 	var contacts []models.Contact
 	for contactRows.Next() {

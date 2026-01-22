@@ -28,7 +28,11 @@ func (r *NoteRepository) GetAllNotes() ([]models.Note, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error querying notes: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetAllNotes: error closing rows: %v\n", err)
+		}
+	}()
 
 	var notes []models.Note
 	var noteIDs []uuid.UUID
@@ -95,7 +99,11 @@ func (r *NoteRepository) getAssociationsForNotes(noteIDs []uuid.UUID) (map[uuid.
 	if err != nil {
 		return nil, fmt.Errorf("error querying note associations: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] getAssociationsForNotes: error closing rows: %v\n", err)
+		}
+	}()
 
 	associations := make(map[uuid.UUID][]models.RecordAssociation)
 	for rows.Next() {
@@ -151,7 +159,11 @@ func (r *NoteRepository) GetNoteByID(id uuid.UUID) (*models.Note, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error querying note associations: %w", err)
 	}
-	defer associationRows.Close()
+	defer func() {
+		if err := associationRows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetNoteByID: error closing association rows: %v\n", err)
+		}
+	}()
 
 	var associations []models.RecordAssociation
 	for associationRows.Next() {
@@ -187,7 +199,11 @@ func (r *NoteRepository) GetNotesByRecordID(recordID uuid.UUID, recordType strin
 	if err != nil {
 		return nil, fmt.Errorf("error querying notes by record: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetNotesByRecordID: error closing rows: %v\n", err)
+		}
+	}()
 
 	var notes []models.Note
 	var noteIDs []uuid.UUID
@@ -252,7 +268,11 @@ func (r *NoteRepository) CreateNote(data models.NoteCreate) (*models.Note, error
 	}
 
 	// Defer a rollback in case anything fails
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			fmt.Printf("[ERROR] CreateNote: error rolling back transaction: %v\n", err)
+		}
+	}()
 
 	// Insert the note
 	noteQuery := `INSERT INTO notes (content, created_by) 
@@ -333,7 +353,11 @@ func (r *NoteRepository) UpdateNote(id uuid.UUID, data models.NoteUpdate) (*mode
 	if err != nil {
 		return nil, fmt.Errorf("error querying note associations: %w", err)
 	}
-	defer associationRows.Close()
+	defer func() {
+		if err := associationRows.Close(); err != nil {
+			fmt.Printf("[ERROR] UpdateNote: error closing association rows: %v\n", err)
+		}
+	}()
 
 	var associations []models.RecordAssociation
 	for associationRows.Next() {
@@ -361,7 +385,11 @@ func (r *NoteRepository) DeleteNote(id uuid.UUID) error {
 	}
 
 	// Defer a rollback in case anything fails
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			fmt.Printf("[ERROR] DeleteNote: error rolling back transaction: %v\n", err)
+		}
+	}()
 
 	// Delete note associations first (foreign key constraints)
 	_, err = tx.Exec(`DELETE FROM note_associations WHERE note_id = $1`, id)

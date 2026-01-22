@@ -66,7 +66,9 @@ func New() (*DB, error) {
 			cancel()
 			lastErr = err
 			// Close the DB connection before retrying
-			db.Close()
+			if err := db.Close(); err != nil {
+				log.Printf("ERROR: Failed to close database connection: %v", err)
+			}
 
 			if attempt < maxRetries {
 				retryDelay := time.Duration(attempt) * time.Second

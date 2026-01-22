@@ -107,13 +107,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
-
       - name: Run Go linting
-        working-directory: core-service
-        run: golangci-lint run --timeout=5m ./...
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.8.0
+          working-directory: core-service
+          args: --timeout=5m
 
   # Step 3: Test
   test-backend:
@@ -162,12 +161,22 @@ jobs:
         working-directory: frontend
         run: npm test -- --ci --coverage --watchAll=false
 
-  # Step 4: Integration Tests
+  # Step 4: Integration Tests (requires PROXYMOCK_API_KEY secret)
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [test-backend]
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
+      - name: Check for proxymock secret
+        env:
+          PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
+        run: |
+          if [ -z "$PROXYMOCK_API_KEY" ]; then
+            echo "::warning::PROXYMOCK_API_KEY secret not configured, skipping integration tests"
+            exit 0
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -188,7 +197,10 @@ jobs:
         env:
           PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
         run: |
-          mkdir -p .speedscale
+          if [ -z "$PROXYMOCK_API_KEY" ]; then
+            echo "Skipping proxymock setup - no API key"
+            exit 0
+          fi
           curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
           echo "$HOME/.speedscale" >> $GITHUB_PATH
           $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_API_KEY"
@@ -198,8 +210,15 @@ jobs:
         run: make build
 
       - name: Run integration tests
+        env:
+          PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
         working-directory: core-service
-        run: make integration-test
+        run: |
+          if [ -z "$PROXYMOCK_API_KEY" ]; then
+            echo "Skipping integration tests - no API key"
+            exit 0
+          fi
+          make integration-test
 
       - name: Upload integration test logs
         if: always()
@@ -210,12 +229,14 @@ jobs:
             core-service/logs/
             core-service/proxymock/
           retention-days: 5
+          if-no-files-found: ignore
 
   # Step 5: Build Container
   build-backend-container:
     name: Build Backend Container
     runs-on: ubuntu-latest
-    needs: [build-backend, test-backend, lint-backend, integration-test]
+    needs: [build-backend, test-backend, lint-backend]
+    if: ${{ always() && needs.build-backend.result == 'success' && needs.test-backend.result == 'success' && needs.lint-backend.result == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

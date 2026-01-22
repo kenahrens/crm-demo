@@ -27,7 +27,11 @@ func (r *UserRepository) GetAllUsers() ([]models.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error querying users: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetAllUsers: error closing rows: %v\n", err)
+		}
+	}()
 
 	var users []models.User
 	for rows.Next() {

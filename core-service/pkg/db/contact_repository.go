@@ -20,19 +20,23 @@ func NewContactRepository(db *DB) *ContactRepository {
 
 // GetAllContacts retrieves all contacts from the database
 func (r *ContactRepository) GetAllContacts() ([]models.Contact, error) {
-    query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
+	query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
               FROM contacts ORDER BY last_name, first_name`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error querying contacts: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetAllContacts: error closing rows: %v\n", err)
+		}
+	}()
 
 	var contacts []models.Contact
 	for rows.Next() {
 		var contact models.Contact
 		var accountID sql.NullString // Handle NULL account_id
-        if err := rows.Scan(
+		if err := rows.Scan(
 			&contact.ID,
 			&contact.FirstName,
 			&contact.LastName,
@@ -46,8 +50,8 @@ func (r *ContactRepository) GetAllContacts() ([]models.Contact, error) {
 			&contact.Zip,
 			&contact.Country,
 			&contact.CreatedAt,
-            &contact.UpdatedAt,
-            &contact.CreatedBy,
+			&contact.UpdatedAt,
+			&contact.CreatedBy,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning contact row: %w", err)
 		}
@@ -73,11 +77,11 @@ func (r *ContactRepository) GetAllContacts() ([]models.Contact, error) {
 
 // GetContactByID retrieves a single contact by ID
 func (r *ContactRepository) GetContactByID(id uuid.UUID) (*models.Contact, error) {
-    query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
+	query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
               FROM contacts WHERE id = $1`
 	var contact models.Contact
 	var accountID sql.NullString // Handle NULL account_id
-    err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRow(query, id).Scan(
 		&contact.ID,
 		&contact.FirstName,
 		&contact.LastName,
@@ -91,8 +95,8 @@ func (r *ContactRepository) GetContactByID(id uuid.UUID) (*models.Contact, error
 		&contact.Zip,
 		&contact.Country,
 		&contact.CreatedAt,
-        &contact.UpdatedAt,
-        &contact.CreatedBy,
+		&contact.UpdatedAt,
+		&contact.CreatedBy,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -115,18 +119,22 @@ func (r *ContactRepository) GetContactByID(id uuid.UUID) (*models.Contact, error
 
 // GetContactsByAccountID retrieves all contacts for a specific account
 func (r *ContactRepository) GetContactsByAccountID(accountID uuid.UUID) ([]models.Contact, error) {
-    query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
+	query := `SELECT id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by 
               FROM contacts WHERE account_id = $1 ORDER BY last_name, first_name`
 	rows, err := r.db.Query(query, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying contacts by account ID: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("[ERROR] GetContactsByAccountID: error closing rows: %v\n", err)
+		}
+	}()
 
 	var contacts []models.Contact
 	for rows.Next() {
 		var contact models.Contact
-        if err := rows.Scan(
+		if err := rows.Scan(
 			&contact.ID,
 			&contact.FirstName,
 			&contact.LastName,
@@ -140,8 +148,8 @@ func (r *ContactRepository) GetContactsByAccountID(accountID uuid.UUID) ([]model
 			&contact.Zip,
 			&contact.Country,
 			&contact.CreatedAt,
-            &contact.UpdatedAt,
-            &contact.CreatedBy,
+			&contact.UpdatedAt,
+			&contact.CreatedBy,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning contact row: %w", err)
 		}
@@ -157,7 +165,7 @@ func (r *ContactRepository) GetContactsByAccountID(accountID uuid.UUID) ([]model
 
 // CreateContact creates a new contact in the database
 func (r *ContactRepository) CreateContact(contactData models.ContactCreate) (*models.Contact, error) {
-    query := `INSERT INTO contacts (first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_by) 
+	query := `INSERT INTO contacts (first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_by) 
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
               RETURNING id, first_name, last_name, email, phone, title, account_id, address, city, state, zip, country, created_at, updated_at, created_by`
 
@@ -167,7 +175,7 @@ func (r *ContactRepository) CreateContact(contactData models.ContactCreate) (*mo
 		accountID = contactData.AccountID
 	}
 
-    err := r.db.QueryRow(
+	err := r.db.QueryRow(
 		query,
 		contactData.FirstName,
 		contactData.LastName,
@@ -179,8 +187,8 @@ func (r *ContactRepository) CreateContact(contactData models.ContactCreate) (*mo
 		contactData.City,
 		contactData.State,
 		contactData.Zip,
-        contactData.Country,
-        contactData.CreatedBy,
+		contactData.Country,
+		contactData.CreatedBy,
 	).Scan(
 		&contact.ID,
 		&contact.FirstName,
@@ -195,8 +203,8 @@ func (r *ContactRepository) CreateContact(contactData models.ContactCreate) (*mo
 		&contact.Zip,
 		&contact.Country,
 		&contact.CreatedAt,
-        &contact.UpdatedAt,
-        &contact.CreatedBy,
+		&contact.UpdatedAt,
+		&contact.CreatedBy,
 	)
 
 	if err != nil {
