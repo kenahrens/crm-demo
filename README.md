@@ -291,27 +291,48 @@ make start
 - Frontend: http://localhost:3000
 - API: http://localhost:8080/v1/api
 
-**Create your first user:**
+**Login with demo users:**
 
-There is no default user. Create the first admin user:
+The application comes pre-loaded with demo users (see Demo Data section below). Log in with:
+- Email: `admin@example.com`
+- Password: `password`
+
+Or use any of the other demo user accounts (john.doe@example.com, jane.smith@example.com, etc.) with the same password.
+
+**To create additional users manually:**
 
 1. Temporarily disable auth as directed in `core-service/tests/test.http` (header comments), then restart the service
-2. Create the admin user via API:
+2. Create a user via API:
    ```bash
    curl -X POST http://localhost:8080/v1/api/users \
      -H 'Content-Type: application/json' \
      -d '{
-       "username": "admin",
-       "email": "admin@example.com",
+       "username": "newuser",
+       "email": "newuser@example.com",
         "password": "password",
-       "role": "admin"
+       "role": "user"
      }'
    ```
-3. Re-enable auth, restart the service, and log in with:
-   - Email: `admin@example.com`
-   - Password: `password`
+3. Re-enable auth and restart the service
 
+**Demo Data:**
 
+The database is automatically seeded with demo data when you first run the application:
+
+- **5 User Logins** - Ready to use for testing and demos
+  - `admin@example.com` (admin role)
+  - `john.doe@example.com` (user role)
+  - `jane.smith@example.com` (user role)
+  - `bob.wilson@example.com` (manager role)
+  - `sarah.jones@example.com` (user role)
+  - All passwords: `password`
+
+- **20 Accounts** - Sample companies across various industries (Technology, Healthcare, Finance, etc.)
+- **60 Contacts** - 3 contacts per account with realistic names and job titles
+- **5 Opportunities** - Sales deals ranging from $50K to $250K in different stages
+- **25 Notes** - Sample notes associated with accounts, contacts, and opportunities
+
+This demo data is created automatically through database migrations and provides a realistic dataset for exploring the CRM functionality without manual data entry.
 
 ### Technology Stack
 

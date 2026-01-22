@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-automation-config
+data:
+  # Point tests to the CRM services
+  VITE_API_HOST: "crm-core"
+  VITE_API_PORT: "80"
+  FRONTEND_HOST: "crm-frontend"
+  FRONTEND_PORT: "80"
+  # Run in CI mode
+  CI: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-runner-script
+data:
+  run-tests.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "=========================================="
+    echo "Running End-to-End Tests in Kubernetes"
+    echo "=========================================="
+
+    # Clone the repository to get test files
+    git clone https://github.com/kenahrens/crm-demo.git /workspace
+    cd /workspace/frontend
+
+    # Install dependencies
+    npm install
+    npx playwright install
+
+    # Configure test environment
+    export VITE_API_HOST="${VITE_API_HOST}"
+    export VITE_API_PORT="${VITE_API_PORT}"
+    export BASE_URL="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+
+    echo "Testing against:"
+    echo "  API: http://${VITE_API_HOST}:${VITE_API_PORT}"
+    echo "  Frontend: http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+    echo ""
+
+    # Run Cypress tests (since that's what we have)
+    if [ -f "node_modules/.bin/cypress" ]; then
+        echo "Running Cypress tests..."
+        npx cypress run --config baseUrl="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+        TEST_EXIT_CODE=$?
+    else
+        echo "ERROR: No Cypress tests found"
+        exit 1
+    fi
+
+    echo ""
+    echo "=========================================="
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+        echo "✓ All tests passed!"
+    else
+        echo "✗ Tests failed with exit code: $TEST_EXIT_CODE"
+    fi
+    echo "=========================================="
+
+    exit $TEST_EXIT_CODE
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: crm-test-automation
+  labels:
+    app: crm-demo
+    component: test-automation
+spec:
+  # Run every 5 minutes to generate continuous traffic
+  schedule: "*/5 * * * *"
+
+  # Keep history of last 3 successful and 3 failed jobs
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  # Don't allow concurrent test runs
+  concurrencyPolicy: Forbid
+
+  jobTemplate:
+    metadata:
+      labels:
+        app: crm-demo
+        component: test-automation
+    spec:
+      # Clean up completed pods after 2 minutes
+      ttlSecondsAfterFinished: 120
+
+      template:
+        metadata:
+          labels:
+            app: crm-demo
+            component: test-automation
+        spec:
+          restartPolicy: Never
+
+          containers:
+          - name: test-runner
+            # Use official Playwright container
+            image: mcr.microsoft.com/playwright:v1.49.1-jammy
+            imagePullPolicy: IfNotPresent
+
+            command: ["/bin/bash"]
+            args: ["/scripts/run-tests.sh"]
+
+            envFrom:
+            - configMapRef:
+                name: test-automation-config
+
+            volumeMounts:
+            - name: test-script
+              mountPath: /scripts
+              readOnly: true
+
+            resources:
+              limits:
+                cpu: "1000m"
+                memory: "1Gi"
+              requests:
+                cpu: "250m"
+                memory: "512Mi"
+
+          volumes:
+          - name: test-script
+            configMap:
+              name: test-runner-script
+              defaultMode: 0755
