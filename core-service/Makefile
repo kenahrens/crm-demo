@@ -33,7 +33,15 @@ test:
 clean:
 	rm -f $(APP_NAME)
 
-integration-test: build proxymock-mock
+integration-test: build
+	@if [ -z "$(PROXYMOCK_RECORDING)" ]; then \
+		echo "WARNING: No proxymock recordings found in ./proxymock/recorded-*"; \
+		echo "Skipping integration tests - no recordings available"; \
+	else \
+		$(MAKE) _run-integration-test; \
+	fi
+
+_run-integration-test: proxymock-mock
 	mkdir -p logs
 	@echo "Starting core-service in background with proxymock..."
 	$(PROXYMOCK_ENV) ./core-service > logs/core-service.log 2>&1 &
