@@ -9,11 +9,11 @@ The test automation CronJob runs Cypress tests every 5 minutes to generate conti
 ## Components
 
 - `cronjob.yaml` - Kubernetes CronJob that schedules and runs the tests
-  - Uses the official Microsoft Playwright container (`mcr.microsoft.com/playwright:v1.49.1-jammy`)
+  - Uses the official Cypress included container (`cypress/included:13.6.2`)
   - Runs every 5 minutes (`*/5 * * * *`)
   - Tests against the deployed `crm-core` and `crm-frontend` services
   - Clones the repository to get the latest test files
-  - Installs dependencies and runs Cypress tests
+  - Installs dependencies and runs Cypress tests end-to-end
 
 ## Configuration
 

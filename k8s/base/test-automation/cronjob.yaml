@@ -17,40 +17,32 @@ metadata:
   name: test-runner-script
 data:
   run-tests.sh: |
-    #!/bin/bash
+    #!/bin/sh
     set -e
 
     echo "=========================================="
-    echo "Running End-to-End Tests in Kubernetes"
+    echo "Running End-to-End Cypress Tests"
     echo "=========================================="
 
     # Clone the repository to get test files
+    echo "Cloning repository..."
     git clone https://github.com/kenahrens/crm-demo.git /workspace
     cd /workspace/frontend
 
-    # Install dependencies
-    npm install
-    npx playwright install
+    # Install dependencies (including Cypress from package.json)
+    echo "Installing dependencies..."
+    npm install --legacy-peer-deps
 
-    # Configure test environment
-    export VITE_API_HOST="${VITE_API_HOST}"
-    export VITE_API_PORT="${VITE_API_PORT}"
-    export BASE_URL="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
-
+    echo ""
     echo "Testing against:"
     echo "  API: http://${VITE_API_HOST}:${VITE_API_PORT}"
     echo "  Frontend: http://${FRONTEND_HOST}:${FRONTEND_PORT}"
     echo ""
 
-    # Run Cypress tests (since that's what we have)
-    if [ -f "node_modules/.bin/cypress" ]; then
-        echo "Running Cypress tests..."
-        npx cypress run --config baseUrl="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
-        TEST_EXIT_CODE=$?
-    else
-        echo "ERROR: No Cypress tests found"
-        exit 1
-    fi
+    # Run Cypress tests
+    echo "Running Cypress tests..."
+    cypress run --config baseUrl="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+    TEST_EXIT_CODE=$?
 
     echo ""
     echo "=========================================="
@@ -100,12 +92,11 @@ spec:
 
           containers:
           - name: test-runner
-            # Use official Playwright container
-            image: mcr.microsoft.com/playwright:v1.49.1-jammy
+            # Use official Cypress container with all dependencies pre-installed
+            image: cypress/included:13.6.2
             imagePullPolicy: IfNotPresent
 
-            command: ["/bin/bash"]
-            args: ["/scripts/run-tests.sh"]
+            command: ["/bin/sh", "/scripts/run-tests.sh"]
 
             envFrom:
             - configMapRef:
