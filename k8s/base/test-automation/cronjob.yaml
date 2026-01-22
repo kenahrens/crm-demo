@@ -92,8 +92,9 @@ spec:
 
           containers:
           - name: test-runner
-            # Use official Cypress container with all dependencies pre-installed
-            image: cypress/included:13.6.2
+            # Use Cypress browsers image - has Node and browser dependencies but not Cypress itself
+            # Cypress gets installed via npm install from package.json
+            image: cypress/browsers:node-20.18.0-chrome-130.0.6723.116-1-ff-132.0.1-edge-130.0.2849.68-1
             imagePullPolicy: IfNotPresent
 
             command: ["/bin/sh", "/scripts/run-tests.sh"]

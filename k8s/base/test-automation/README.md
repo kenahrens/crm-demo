@@ -9,11 +9,12 @@ The test automation CronJob runs Cypress tests every 5 minutes to generate conti
 ## Components
 
 - `cronjob.yaml` - Kubernetes CronJob that schedules and runs the tests
-  - Uses the official Cypress included container (`cypress/included:13.6.2`)
+  - Uses the official Cypress browsers container (`cypress/browsers:node-20.18.0-chrome-130.0.6723.116-1-ff-132.0.1-edge-130.0.2849.68-1`)
+  - Has Node.js and all browser dependencies pre-installed
   - Runs every 5 minutes (`*/5 * * * *`)
   - Tests against the deployed `crm-core` and `crm-frontend` services
   - Clones the repository to get the latest test files
-  - Installs dependencies and runs Cypress tests end-to-end
+  - Installs dependencies (including Cypress from package.json) and runs tests end-to-end
 
 ## Configuration
 
