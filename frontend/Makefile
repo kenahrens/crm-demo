@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help install start build test lint docker-test
+.PHONY: help install start build test docker-test
 
 # VERSION can be passed from parent Makefile, or read from root VERSION file
 VERSION ?= $(shell cat ../VERSION 2>/dev/null || cat VERSION 2>/dev/null || echo "latest")
@@ -21,9 +21,6 @@ build: ## Build production bundle
 
 test: ## Run tests
 	npm test
-
-lint: ## Run linting
-	npm run lint
 
 docker-build: ## Build Docker image
 	@echo "Building $(DOCKER_IMAGE) (version: $(VERSION))"
