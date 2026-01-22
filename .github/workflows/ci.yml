@@ -13,13 +13,15 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/kenahrens/crm-demo/crm-core
   FRONTEND_IMAGE: ghcr.io/kenahrens/crm-demo/crm-frontend
+  GO_VERSION: '1.24.1'
+  NODE_VERSION: '18'
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  # Step 1: Build Code
+  # Step 1: Build and Lint Code
   build-backend:
     name: Build Backend Code
     runs-on: ubuntu-latest
@@ -30,7 +32,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -39,6 +41,10 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('core-service/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        working-directory: core-service
+        run: go mod download
 
       - name: Build backend
         working-directory: core-service
@@ -61,7 +67,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -80,7 +86,58 @@ jobs:
           path: frontend/build
           retention-days: 1
 
-  # Step 2: Test
+  # Step 2: Lint Code
+  lint-backend:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('core-service/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
+
+      - name: Run Go linting
+        working-directory: core-service
+        run: golangci-lint run --timeout=5m ./...
+
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend linting
+        working-directory: frontend
+        run: npm run lint
+
+  # Step 3: Test
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
@@ -91,7 +148,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -115,7 +172,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -127,11 +184,60 @@ jobs:
         working-directory: frontend
         run: npm test -- --ci --coverage --watchAll=false
 
-  # Step 3: Build Container
+  # Step 4: Integration Tests
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('core-service/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Setup proxymock
+        env:
+          PROXYMOCK_API_KEY: ${{ secrets.PROXYMOCK_API_KEY }}
+        run: |
+          mkdir -p .speedscale
+          curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock | sh
+          echo "$HOME/.speedscale" >> $GITHUB_PATH
+          $HOME/.speedscale/proxymock init --api-key "$PROXYMOCK_API_KEY"
+
+      - name: Build backend
+        working-directory: core-service
+        run: make build
+
+      - name: Run integration tests
+        working-directory: core-service
+        run: make integration-test
+
+      - name: Upload integration test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs
+          path: |
+            core-service/logs/
+            core-service/proxymock/
+          retention-days: 5
+
+  # Step 5: Build Container
   build-backend-container:
     name: Build Backend Container
     runs-on: ubuntu-latest
-    needs: [build-backend, test-backend]
+    needs: [build-backend, test-backend, lint-backend, integration-test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -181,7 +287,7 @@ jobs:
   build-frontend-container:
     name: Build Frontend Container
     runs-on: ubuntu-latest
-    needs: [build-frontend, test-frontend]
+    needs: [build-frontend, test-frontend, lint-frontend]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -228,7 +334,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Step 4: Test Container
+  # Step 6: Test Container
   test-backend-container:
     name: Test Backend Container
     runs-on: ubuntu-latest
