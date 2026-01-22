@@ -19,9 +19,12 @@ spec:
     spec:
       containers:
       - name: crm-frontend
-        image: ghcr.io/kenahrens/crm-demo/crm-frontend:v1.3.8
+        image: ghcr.io/kenahrens/crm-demo/crm-frontend:v1.3.9
         ports:
         - containerPort: 80
+        env:
+        - name: DNS_RESOLVER
+          value: "kube-dns.kube-system.svc.cluster.local"
         resources:
           limits:
             cpu: "0.5"
