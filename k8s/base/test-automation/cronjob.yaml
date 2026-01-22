@@ -41,7 +41,7 @@ data:
 
     # Run Cypress tests
     echo "Running Cypress tests..."
-    cypress run --config baseUrl="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+    npx cypress run --config baseUrl="http://${FRONTEND_HOST}:${FRONTEND_PORT}"
     TEST_EXIT_CODE=$?
 
     echo ""
